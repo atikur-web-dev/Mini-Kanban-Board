@@ -1,0 +1,25 @@
+services:
+  postgres:
+    image: postgres:17
+    container_name: mini-kanban-postgres
+    restart: unless-stopped
+
+    environment:
+      POSTGRES_USER: kanban_user
+      POSTGRES_PASSWORD: kanban_password
+      POSTGRES_DB: mini_kanban
+
+    ports:
+      - "5433:5432"
+
+    volumes:
+      - kanban_postgres_data:/var/lib/postgresql/data
+
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U kanban_user -d mini_kanban"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  kanban_postgres_data:
