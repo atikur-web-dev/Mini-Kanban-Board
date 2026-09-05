@@ -54,35 +54,30 @@ export function Column({
     setIsEditing(false);
   };
 
-  const handleDeleteColumn = () => {
-    if (column.tasks.length > 0) {
-      toast.error("Cannot delete column with tasks. Remove tasks first.");
-      return;
-    }
-    toast((t) => (
-  <div className="flex items-center gap-3">
-    <span>Delete column &ldquo;{column.name}&rdquo;?</span>
-    <button
-      onClick={() => {
-        toast.dismiss(t.id);
-        onDeleteColumn(column.id);
-        toast.success("Column deleted");
-      }}
-      className="px-3 py-1 bg-red-500 text-white text-sm rounded hover:bg-red-600"
-    >
-      Delete
-    </button>
-    <button
-      onClick={() => toast.dismiss(t.id)}
-      className="px-3 py-1 bg-gray-300 text-gray-700 text-sm rounded hover:bg-gray-400"
-    >
-      Cancel
-    </button>
-  </div>
-), {
-  duration: 5000,
-});
-  };
+const handleDeleteColumn = () => {
+  toast((t) => (
+    <div className="flex items-center gap-3">
+      <span>Delete column &ldquo;{column.name}&rdquo;?</span>
+      <button
+        onClick={() => {
+          toast.dismiss(t.id);
+          onDeleteColumn(column.id);
+        }}
+        className="px-3 py-1 bg-red-500 text-white text-sm rounded hover:bg-red-600"
+      >
+        Delete
+      </button>
+      <button
+        onClick={() => toast.dismiss(t.id)}
+        className="px-3 py-1 bg-gray-300 text-gray-700 text-sm rounded hover:bg-gray-400"
+      >
+        Cancel
+      </button>
+    </div>
+  ), {
+    duration: 5000,
+  });
+};
 
   return (
     <div

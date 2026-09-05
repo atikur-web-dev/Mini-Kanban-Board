@@ -25,8 +25,12 @@ export default function DashboardPage() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newBoardName, setNewBoardName] = useState("");
   const [error, setError] = useState("");
-  
-  const isClient = typeof window !== "undefined";
+
+  // ✅ Direct check - no state, no useEffect
+  const [isClient, setIsClient] = useState(false);
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -57,32 +61,35 @@ export default function DashboardPage() {
   };
 
   const handleDeleteBoard = async (id: string, name: string) => {
-    toast((t) => (
-      <div className="flex items-center gap-3">
-        <span>Delete board &ldquo;{name}&rdquo;?</span>
-        <button
-          onClick={() => {
-            toast.dismiss(t.id);
-            deleteBoard(id);
-            toast.success("Board deleted");
-          }}
-          className="px-3 py-1 bg-red-500 text-white text-sm rounded hover:bg-red-600"
-        >
-          Delete
-        </button>
-        <button
-          onClick={() => toast.dismiss(t.id)}
-          className="px-3 py-1 bg-gray-300 text-gray-700 text-sm rounded hover:bg-gray-400"
-        >
-          Cancel
-        </button>
-      </div>
-    ), {
-      duration: 5000,
-    });
+    toast(
+      (t) => (
+        <div className="flex items-center gap-3">
+          <span>Delete board &ldquo;{name}&rdquo;?</span>
+          <button
+            onClick={() => {
+              toast.dismiss(t.id);
+              deleteBoard(id);
+              toast.success("Board deleted");
+            }}
+            className="px-3 py-1 bg-red-500 text-white text-sm rounded hover:bg-red-600"
+          >
+            Delete
+          </button>
+          <button
+            onClick={() => toast.dismiss(t.id)}
+            className="px-3 py-1 bg-gray-300 text-gray-700 text-sm rounded hover:bg-gray-400"
+          >
+            Cancel
+          </button>
+        </div>
+      ),
+      {
+        duration: 5000,
+      },
+    );
   };
 
-  // Show loader on server side
+  // ✅ Show loader on server side - no state needed
   if (!isClient) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -101,7 +108,6 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
       <header className="bg-white shadow">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
           <h1 className="text-2xl font-bold text-gray-900">My Boards</h1>
@@ -120,17 +126,15 @@ export default function DashboardPage() {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Create Board Button */}
         <div className="mb-6">
-          <Button onClick={() => setShowCreateModal(true)}>
-            New Board
-          </Button>
+          <Button onClick={() => setShowCreateModal(true)}>New Board</Button>
         </div>
 
-        {/* Board Grid */}
         {boards.length === 0 ? (
           <div className="text-center py-12 bg-white rounded-lg shadow">
-            <p className="text-gray-500 text-lg">No boards yet. Create your first board!</p>
+            <p className="text-gray-500 text-lg">
+              No boards yet. Create your first board!
+            </p>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -144,7 +148,9 @@ export default function DashboardPage() {
                     href={`/board/${board.id}`}
                     className="flex-1 hover:underline"
                   >
-                    <h3 className="text-lg font-semibold text-gray-900">{board.name}</h3>
+                    <h3 className="text-lg font-semibold text-gray-900">
+                      {board.name}
+                    </h3>
                     <p className="text-sm text-gray-500 mt-1">
                       {board._count?.columns || 0} columns
                     </p>
@@ -164,11 +170,12 @@ export default function DashboardPage() {
           </div>
         )}
 
-        {/* Create Board Modal */}
         {showCreateModal && (
           <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center p-4 z-50">
             <div className="bg-white rounded-lg max-w-md w-full p-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">Create New Board</h3>
+              <h3 className="text-lg font-medium text-gray-900 mb-4">
+                Create New Board
+              </h3>
               <form onSubmit={handleCreateBoard}>
                 {error && (
                   <div className="mb-4 rounded-md bg-red-50 p-3">

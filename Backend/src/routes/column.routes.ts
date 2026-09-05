@@ -20,10 +20,8 @@ const updateColumnSchema = z.object({
   }),
 });
 
-// All routes require authentication
 router.use(authenticate);
 
-// Column routes - Note: checkBoardAccess needs boardId from params
 router.post(
   "/",
   validate(createColumnSchema),
@@ -31,16 +29,17 @@ router.post(
   columnController.createColumn.bind(columnController)
 );
 
-// ✅ FIX: Use correct route for column operations
+// ✅ DELETE route - No middleware needed
+router.delete(
+  "/:columnId",
+  columnController.deleteColumn.bind(columnController)
+);
+
+// ✅ UPDATE route - No middleware needed
 router.patch(
   "/:columnId",
   validate(updateColumnSchema),
   columnController.updateColumn.bind(columnController)
-);
-
-router.delete(
-  "/:columnId",
-  columnController.deleteColumn.bind(columnController)
 );
 
 export default router;

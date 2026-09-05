@@ -1,4 +1,3 @@
-// Backend/src/services/column.service.ts
 import { prisma } from "../lib/prisma.js";
 import { AppError } from "../utils/appError.js";
 
@@ -8,7 +7,6 @@ export class ColumnService {
       throw new AppError(400, "Column name is required");
     }
 
-    // Get current max position
     const lastColumn = await prisma.column.findFirst({
       where: { boardId },
       orderBy: { position: "desc" },
@@ -52,7 +50,6 @@ export class ColumnService {
   }
 
   async deleteColumn(columnId: string) {
-    // Get column info before deleting
     const column = await prisma.column.findUnique({
       where: { id: columnId },
       select: { boardId: true, position: true },
@@ -62,23 +59,21 @@ export class ColumnService {
       throw new AppError(404, "Column not found");
     }
 
-    // Delete column and reorder remaining columns
     await prisma.$transaction(async (tx) => {
-      // Delete the column (tasks will be cascade deleted)
       await tx.column.delete({
         where: { id: columnId },
       });
 
-      // Reorder remaining columns
       const remainingColumns = await tx.column.findMany({
         where: { boardId: column.boardId },
         orderBy: { position: "asc" },
       });
 
-      for (let i = 0; i < remainingColumns.length; i++) {
+      // ✅ Fix: Use for...of loop with type guard
+      for (const col of remainingColumns) {
         await tx.column.update({
-          where: { id: remainingColumns[i]!.id },
-          data: { position: i },
+          where: { id: col.id },
+          data: { position: remainingColumns.indexOf(col) },
         });
       }
     });
