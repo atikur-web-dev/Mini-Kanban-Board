@@ -165,7 +165,7 @@ export function Column({
   const handleDeleteColumn = () => {
     toast(
       (t) => (
-        <div className="flex min-w-[280px] items-center justify-between gap-4">
+        <div className="flex min-w-70 items-center justify-between gap-4">
           <div>
             <p className="font-medium text-slate-800">Delete column?</p>
             <p className="mt-0.5 text-xs text-slate-500">
@@ -221,7 +221,7 @@ export function Column({
           : "border-slate-200 hover:border-blue-200 hover:shadow-md"
       }`}
     >
-      <div className="border-b border-slate-100 bg-gradient-to-b from-white to-slate-50/70 px-4 py-3.5">
+      <div className="border-b border-slate-100 bg-linear-to-b from-white to-slate-50/70 px-4 py-3.5">
         <div className="flex items-center justify-between gap-3">
           <div className="flex min-w-0 flex-1 items-center gap-2.5">
             <div className="h-2.5 w-2.5 shrink-0 rounded-full bg-blue-500 ring-4 ring-blue-50" />
@@ -317,7 +317,7 @@ export function Column({
       </div>
 
       <div
-        className={`min-h-[220px] flex-1 p-3 transition-colors ${
+        className={`min-h-55 flex-1 p-3 transition-colors ${
           isOver ? "bg-blue-50/40" : "bg-slate-50/60"
         }`}
       >
@@ -327,7 +327,7 @@ export function Column({
         >
           {column.tasks.length === 0 ? (
             <div
-              className={`flex min-h-[190px] flex-col items-center justify-center rounded-xl border border-dashed px-4 text-center transition-colors ${
+              className={`flex min-h-47.5 flex-col items-center justify-center rounded-xl border border-dashed px-4 text-center transition-colors ${
                 isOver
                   ? "border-blue-300 bg-blue-50"
                   : "border-slate-200 bg-white/60"

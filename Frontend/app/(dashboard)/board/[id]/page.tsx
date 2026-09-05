@@ -1,10 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-
 import {
   DndContext,
   DragEndEvent,
@@ -14,16 +12,12 @@ import {
   useSensor,
   useSensors,
 } from "@dnd-kit/core";
-
 import { useAuth } from "@/hooks/useAuth";
 import { useBoard } from "@/context/BoardContext";
 import { Loader } from "@/components/ui/Loader";
-import { Button } from "@/components/ui/Button";
 import { Column as ColumnComponent } from "@/components/column/Column";
-
 import { Column } from "@/types";
 import { BoardMember } from "@/lib/api/board";
-
 import toast from "react-hot-toast";
 
 const getErrorMessage = (error: unknown): string => {
@@ -196,15 +190,12 @@ export default function BoardPage() {
 
   const [showColumnModal, setShowColumnModal] = useState(false);
   const [newColumnName, setNewColumnName] = useState("");
-
   const [showTaskModal, setShowTaskModal] = useState(false);
   const [newTaskTitle, setNewTaskTitle] = useState("");
   const [newTaskDescription, setNewTaskDescription] = useState("");
   const [selectedColumnId, setSelectedColumnId] = useState<string | null>(null);
-
   const [error, setError] = useState("");
   const [activeId, setActiveId] = useState<string | null>(null);
-
   const [showMembersModal, setShowMembersModal] = useState(false);
   const [boardMembers, setBoardMembers] = useState<BoardMember[]>([]);
   const [shareEmail, setShareEmail] = useState("");
@@ -522,7 +513,7 @@ export default function BoardPage() {
   return (
     <div className="min-h-screen bg-slate-50">
       <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/95 shadow-sm backdrop-blur">
-        <div className="mx-auto flex min-h-[72px] max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
+        <div className="mx-auto flex min-h-18 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
           <div className="flex min-w-0 items-center gap-3">
             <Link
               href="/dashboard"

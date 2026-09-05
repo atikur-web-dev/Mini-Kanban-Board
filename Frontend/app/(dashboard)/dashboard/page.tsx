@@ -285,7 +285,7 @@ export default function DashboardPage() {
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">
       <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/95 shadow-sm backdrop-blur">
-        <div className="mx-auto flex min-h-[72px] max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
+        <div className="mx-auto flex min-h-18 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
           <Link
             href="/dashboard"
             className="flex items-center gap-3"
@@ -312,7 +312,7 @@ export default function DashboardPage() {
               </div>
 
               <div className="hidden md:block">
-                <p className="max-w-[180px] truncate text-sm font-semibold text-slate-800">
+                <p className="max-w-45 truncate text-sm font-semibold text-slate-800">
                   {user?.name || "User"}
                 </p>
 
@@ -383,7 +383,7 @@ export default function DashboardPage() {
         </div>
 
         {boards.length === 0 ? (
-          <section className="flex min-h-[420px] items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-white px-6 shadow-sm">
+          <section className="flex min-h-105 items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-white px-6 shadow-sm">
             <div className="max-w-md text-center">
               <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-blue-50 text-blue-600">
                 <BoardIcon />
