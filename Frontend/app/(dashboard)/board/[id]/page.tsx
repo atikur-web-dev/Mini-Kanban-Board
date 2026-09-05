@@ -3,13 +3,19 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import {
+  DndContext,
+  DragEndEvent,
+  DragStartEvent,
+  closestCorners,
+} from "@dnd-kit/core";
 import { useAuth } from "@/hooks/useAuth";
 import { useBoard } from "@/context/BoardContext";
 import { Loader } from "@/components/ui/Loader";
 import { Button } from "@/components/ui/Button";
+import { Column as ColumnComponent } from "@/components/column/Column";
 import { Column } from "@/types";
 
-// Type guard for error
 const getErrorMessage = (error: unknown): string => {
   if (error instanceof Error) return error.message;
   if (typeof error === "string") return error;
@@ -24,8 +30,17 @@ export default function BoardPage() {
   const router = useRouter();
   const boardId = params.id as string;
   const { isAuthenticated } = useAuth();
-  const { currentBoard, loading, fetchBoard, createColumn, deleteColumn, createTask, deleteTask, moveTask } = useBoard();
-  
+  const {
+    currentBoard,
+    loading,
+    fetchBoard,
+    createColumn,
+    deleteColumn,
+    createTask,
+    deleteTask,
+    moveTask,
+  } = useBoard();
+
   const [showColumnModal, setShowColumnModal] = useState(false);
   const [newColumnName, setNewColumnName] = useState("");
   const [showTaskModal, setShowTaskModal] = useState(false);
@@ -33,6 +48,10 @@ export default function BoardPage() {
   const [newTaskDescription, setNewTaskDescription] = useState("");
   const [selectedColumnId, setSelectedColumnId] = useState<string | null>(null);
   const [error, setError] = useState("");
+  const [activeId, setActiveId] = useState<string | null>(null);
+  
+  // ✅ Use typeof window check directly - no state needed
+  const isClient = typeof window !== "undefined";
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -43,11 +62,6 @@ export default function BoardPage() {
       fetchBoard(boardId);
     }
   }, [isAuthenticated, router, boardId, fetchBoard]);
-
-    // Debug: Log currentBoard changes
-  useEffect(() => {
-    console.log("Current Board:", currentBoard); 
-  }, [currentBoard]);
 
   const handleCreateColumn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -74,7 +88,11 @@ export default function BoardPage() {
     }
 
     try {
-      await createTask(selectedColumnId, newTaskTitle.trim(), newTaskDescription.trim() || undefined);
+      await createTask(
+        selectedColumnId,
+        newTaskTitle.trim(),
+        newTaskDescription.trim() || undefined
+      );
       setShowTaskModal(false);
       setNewTaskTitle("");
       setNewTaskDescription("");
@@ -86,7 +104,12 @@ export default function BoardPage() {
   };
 
   const handleDeleteColumn = async (columnId: string, name: string) => {
-    if (!confirm(`Are you sure you want to delete column "${name}"? All tasks will be deleted.`)) return;
+    if (
+      !confirm(
+        `Are you sure you want to delete column "${name}"? All tasks will be deleted.`
+      )
+    )
+      return;
     try {
       await deleteColumn(columnId);
     } catch (err: unknown) {
@@ -94,8 +117,14 @@ export default function BoardPage() {
     }
   };
 
-  const handleDeleteTask = async (taskId: string, title: string) => {
-    if (!confirm(`Are you sure you want to delete task "${title}"?`)) return;
+  const handleDeleteTask = async (taskId: string) => {
+    const task = currentBoard?.columns
+      .flatMap((col) => col.tasks)
+      .find((t) => t.id === taskId);
+    
+    if (!task) return;
+    
+    if (!confirm(`Are you sure you want to delete task "${task.title}"?`)) return;
     try {
       await deleteTask(taskId);
     } catch (err: unknown) {
@@ -103,13 +132,82 @@ export default function BoardPage() {
     }
   };
 
-  const handleMoveTask = async (taskId: string, targetColumnId: string, targetPosition: number) => {
+  const handleMoveTask = async (taskId: string, targetColumnId: string) => {
     try {
-      await moveTask(taskId, targetColumnId, targetPosition);
+      await moveTask(taskId, targetColumnId, 0);
     } catch (err: unknown) {
       alert("Failed to move task: " + getErrorMessage(err));
     }
   };
+
+  // Drag & Drop Handlers
+  const handleDragStart = (event: DragStartEvent) => {
+    setActiveId(event.active.id as string);
+  };
+
+  const handleDragEnd = async (event: DragEndEvent) => {
+    setActiveId(null);
+    const { active, over } = event;
+
+    if (!over) return;
+
+    const activeTaskId = active.id as string;
+    const overId = over.id as string;
+
+    const activeTask = currentBoard?.columns
+      .flatMap((col) => col.tasks)
+      .find((t) => t.id === activeTaskId);
+
+    if (!activeTask) return;
+
+    let targetColumnId: string | null = null;
+    let targetPosition = 0;
+
+    const targetColumn = currentBoard?.columns.find((col) => col.id === overId);
+    if (targetColumn) {
+      targetColumnId = targetColumn.id;
+      targetPosition = targetColumn.tasks.length;
+    } else {
+      const targetTask = currentBoard?.columns
+        .flatMap((col) => col.tasks)
+        .find((t) => t.id === overId);
+      if (targetTask) {
+        targetColumnId = targetTask.columnId;
+        const column = currentBoard?.columns.find(
+          (col) => col.id === targetColumnId
+        );
+        const taskIndex = column?.tasks.findIndex((t) => t.id === overId) ?? 0;
+        targetPosition = taskIndex + 1;
+      }
+    }
+
+    if (!targetColumnId) return;
+
+    if (activeTask.columnId === targetColumnId) {
+      const column = currentBoard?.columns.find(
+        (col) => col.id === targetColumnId
+      );
+      const currentIndex = column?.tasks.findIndex(
+        (t) => t.id === activeTaskId
+      );
+      if (currentIndex === targetPosition - 1) return;
+    }
+
+    try {
+      await moveTask(activeTaskId, targetColumnId, targetPosition);
+    } catch (err: unknown) {
+      alert("Failed to move task: " + getErrorMessage(err));
+    }
+  };
+
+  // ✅ Show loader on server-side to prevent hydration mismatch
+  if (!isClient) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader size="lg" />
+      </div>
+    );
+  }
 
   if (loading && !currentBoard) {
     return (
@@ -124,13 +222,21 @@ export default function BoardPage() {
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <p className="text-gray-500 text-lg">Board not found</p>
-          <Link href="/dashboard" className="text-indigo-600 hover:underline mt-4 inline-block">
+          <Link
+            href="/dashboard"
+            className="text-indigo-600 hover:underline mt-4 inline-block"
+          >
             Go back to dashboard
           </Link>
         </div>
       </div>
     );
   }
+
+  const allColumns = currentBoard.columns.map((col) => ({
+    id: col.id,
+    name: col.name,
+  }));
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -141,7 +247,9 @@ export default function BoardPage() {
             <Link href="/dashboard" className="text-gray-500 hover:text-gray-700">
               ← Back
             </Link>
-            <h1 className="text-2xl font-bold text-gray-900">{currentBoard.name}</h1>
+            <h1 className="text-2xl font-bold text-gray-900">
+              {currentBoard.name}
+            </h1>
           </div>
           <Button onClick={() => setShowColumnModal(true)} size="sm">
             + Add Column
@@ -150,92 +258,43 @@ export default function BoardPage() {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Columns */}
-        <div className="flex gap-6 overflow-x-auto pb-4">
-          {currentBoard.columns?.length === 0 ? (
-            <div className="w-full text-center py-12 bg-white rounded-lg shadow">
-              <p className="text-gray-500">No columns yet. Add your first column!</p>
-            </div>
-          ) : (
-            currentBoard.columns?.map((column: Column) => (
-              <div
-                key={column.id}
-                className="bg-white rounded-lg shadow flex-shrink-0 w-80"
-              >
-                <div className="p-4 border-b flex justify-between items-center">
-                  <h3 className="font-semibold text-gray-900">{column.name}</h3>
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => {
-                        setSelectedColumnId(column.id);
-                        setShowTaskModal(true);
-                      }}
-                      className="text-sm text-indigo-600 hover:text-indigo-800"
-                    >
-                      + Add Task
-                    </button>
-                    <button
-                      onClick={() => handleDeleteColumn(column.id, column.name)}
-                      className="text-sm text-red-500 hover:text-red-700"
-                    >
-                      ×
-                    </button>
-                  </div>
-                </div>
-                <div className="p-3 space-y-2 min-h-[200px]">
-                  {column.tasks?.length === 0 ? (
-                    <p className="text-gray-400 text-sm text-center py-4">No tasks</p>
-                  ) : (
-                    column.tasks?.map((task) => (
-                      <div
-                        key={task.id}
-                        className="bg-gray-50 p-3 rounded border border-gray-200 hover:shadow-sm transition-shadow"
-                      >
-                        <div className="flex justify-between items-start">
-                          <div>
-                            <p className="font-medium text-gray-800">{task.title}</p>
-                            {task.description && (
-                              <p className="text-sm text-gray-500 mt-1">{task.description}</p>
-                            )}
-                            <p className="text-xs text-gray-400 mt-2">
-                              {new Date(task.createdAt).toLocaleDateString()}
-                            </p>
-                          </div>
-                          <button
-                            onClick={() => handleDeleteTask(task.id, task.title)}
-                            className="text-red-400 hover:text-red-600 text-sm"
-                          >
-                            ×
-                          </button>
-                        </div>
-                        {/* Simple move buttons - for demo */}
-                        <div className="mt-2 flex gap-1 flex-wrap">
-                          {currentBoard.columns?.map((col) => (
-                            col.id !== column.id && (
-                              <button
-                                key={col.id}
-                                onClick={() => handleMoveTask(task.id, col.id, 0)}
-                                className="text-xs bg-gray-200 hover:bg-gray-300 px-2 py-0.5 rounded"
-                              >
-                                Move to {col.name}
-                              </button>
-                            )
-                          ))}
-                        </div>
-                      </div>
-                    ))
-                  )}
-                </div>
+        {/* Columns with Drag & Drop */}
+        <DndContext
+          collisionDetection={closestCorners}
+          onDragStart={handleDragStart}
+          onDragEnd={handleDragEnd}
+        >
+          <div className="flex gap-6 overflow-x-auto pb-4">
+            {currentBoard.columns?.length === 0 ? (
+              <div className="w-full text-center py-12 bg-white rounded-lg shadow">
+                <p className="text-gray-500">No columns yet. Add your first column!</p>
               </div>
-            ))
-          )}
-        </div>
+            ) : (
+              currentBoard.columns?.map((column: Column) => (
+                <ColumnComponent
+                  key={column.id}
+                  column={column}
+                  allColumns={allColumns}
+                  onDeleteColumn={handleDeleteColumn}
+                  onAddTask={(colId) => {
+                    setSelectedColumnId(colId);
+                    setShowTaskModal(true);
+                  }}
+                  onDeleteTask={handleDeleteTask}
+                  onMoveTask={handleMoveTask}
+                />
+              ))
+            )}
+          </div>
+        </DndContext>
 
         {/* Create Column Modal */}
         {showColumnModal && (
           <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center p-4 z-50">
             <div className="bg-white rounded-lg max-w-md w-full p-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">Create New Column</h3>
+              <h3 className="text-lg font-medium text-gray-900 mb-4">
+                Create New Column
+              </h3>
               <form onSubmit={handleCreateColumn}>
                 {error && (
                   <div className="mb-4 rounded-md bg-red-50 p-3">
@@ -278,7 +337,9 @@ export default function BoardPage() {
         {showTaskModal && (
           <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center p-4 z-50">
             <div className="bg-white rounded-lg max-w-md w-full p-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">Create New Task</h3>
+              <h3 className="text-lg font-medium text-gray-900 mb-4">
+                Create New Task
+              </h3>
               <form onSubmit={handleCreateTask}>
                 {error && (
                   <div className="mb-4 rounded-md bg-red-50 p-3">

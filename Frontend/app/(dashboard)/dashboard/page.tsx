@@ -8,7 +8,6 @@ import { useBoard } from "@/context/BoardContext";
 import { Loader } from "@/components/ui/Loader";
 import { Button } from "@/components/ui/Button";
 
-// Type guard for error
 const getErrorMessage = (error: unknown): string => {
   if (error instanceof Error) return error.message;
   if (typeof error === "string") return error;
@@ -60,6 +59,15 @@ export default function DashboardPage() {
     }
   };
 
+  // ✅ Use typeof window !== "undefined" check instead of state
+  if (typeof window === "undefined") {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader size="lg" />
+      </div>
+    );
+  }
+
   if (loading && boards.length === 0) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -75,7 +83,9 @@ export default function DashboardPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
           <h1 className="text-2xl font-bold text-gray-900">My Boards</h1>
           <div className="flex items-center gap-4">
-            <span className="text-sm text-gray-600">Welcome, {user?.name}</span>
+            <span className="text-sm text-gray-600">
+              Welcome, {user?.name || "User"}
+            </span>
             <button
               onClick={logout}
               className="text-sm text-red-600 hover:text-red-800"
@@ -121,7 +131,7 @@ export default function DashboardPage() {
                   </Link>
                   <button
                     onClick={() => handleDeleteBoard(board.id, board.name)}
-                    className="text-red-500 hover:text-red-700 text-sm ml-4 shrink-0"
+                    className="text-red-500 hover:text-red-700 text-sm ml-4 flex-shrink-0"
                   >
                     Delete
                   </button>
