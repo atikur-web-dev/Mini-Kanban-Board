@@ -18,7 +18,7 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (isAuthenticated) {
-      router.push("/dashboard");
+      router.replace("/dashboard");
     }
   }, [isAuthenticated, router]);
 
@@ -29,9 +29,10 @@ export default function LoginPage() {
 
     try {
       await login(email, password);
-      router.push("/dashboard");
-    } catch (err: any) {
-      setError(err.message || "Invalid email or password");
+      router.replace("/dashboard");
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : "Invalid email or password";
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }

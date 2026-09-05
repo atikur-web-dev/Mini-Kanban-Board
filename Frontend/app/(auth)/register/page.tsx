@@ -19,7 +19,7 @@ export default function RegisterPage() {
 
   useEffect(() => {
     if (isAuthenticated) {
-      router.push("/dashboard");
+      router.replace("/dashboard");
     }
   }, [isAuthenticated, router]);
 
@@ -30,9 +30,10 @@ export default function RegisterPage() {
 
     try {
       await register(name, email, password);
-      router.push("/dashboard");
-    } catch (err: any) {
-      setError(err.message || "Registration failed");
+      router.replace("/dashboard");
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : "Registration failed";
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }

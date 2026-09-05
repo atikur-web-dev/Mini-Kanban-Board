@@ -15,28 +15,21 @@ interface AuthContextType {
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Helper function to get initial user from localStorage
+// Helper to get initial user from localStorage (runs only on client)
 const getInitialUser = (): User | null => {
   if (typeof window === "undefined") return null;
   
-  const token = localStorage.getItem("token");
-  if (!token) return null;
-  
-  const storedUser = localStorage.getItem("user");
-  if (!storedUser) return null;
-  
   try {
+    const token = localStorage.getItem("token");
+    if (!token) return null;
+    
+    const storedUser = localStorage.getItem("user");
+    if (!storedUser) return null;
+    
     return JSON.parse(storedUser);
   } catch {
-    localStorage.removeItem("user");
     return null;
   }
-};
-
-// Helper to get initial loading state
-const getInitialLoading = (): boolean => {
-  if (typeof window === "undefined") return true;
-  return false; // Once we're on client, we know we're not loading initially
 };
 
 export function AuthProvider({ children }: { children: ReactNode }) {
