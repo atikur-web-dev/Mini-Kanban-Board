@@ -1,4 +1,4 @@
-// Import Task from task.ts
+// Frontend/types/column.ts
 import { Task } from "../types/task";
 
 export interface Column {

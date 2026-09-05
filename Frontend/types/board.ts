@@ -1,3 +1,4 @@
+// Frontend/types/board.ts
 import { User } from "./auth";
 import { Column } from "../types/column";
 

@@ -1,3 +1,4 @@
+// Frontend/lib/api/auth.ts
 import { api } from "./client";
 import { AuthResponse, LoginCredentials, RegisterCredentials } from "@/types";
 

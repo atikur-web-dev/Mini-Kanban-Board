@@ -1,17 +1,14 @@
-
-const API_URL =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
+import { API_URL } from "../constants";
 
 export class ApiClient {
   private token: string | null = null;
 
   setToken(token: string | null) {
-    console.log(
-      "Setting token:",
-      token ? "Token present" : "Token null",
-    );
-
     this.token = token;
+
+    if (typeof window === "undefined") {
+      return;
+    }
 
     if (token) {
       localStorage.setItem("token", token);
@@ -21,15 +18,15 @@ export class ApiClient {
   }
 
   getToken(): string | null {
-    if (!this.token) {
-      this.token = localStorage.getItem("token");
-
-      console.log(
-        "Getting token from localStorage:",
-        this.token ? "Present" : "Null",
-      );
+    if (this.token) {
+      return this.token;
     }
 
+    if (typeof window === "undefined") {
+      return null;
+    }
+
+    this.token = localStorage.getItem("token");
     return this.token;
   }
 
@@ -40,17 +37,11 @@ export class ApiClient {
     const url = `${API_URL}${endpoint}`;
     const token = this.getToken();
 
-    console.log("Request to:", url);
-    console.log("Token:", token ? "Present" : "Null");
-
-    const headers: HeadersInit = {
-      "Content-Type": "application/json",
-      ...options.headers,
-    };
+    const headers = new Headers(options.headers);
+    headers.set("Content-Type", "application/json");
 
     if (token) {
-      (headers as Record<string, string>)["Authorization"] =
-        `Bearer ${token}`;
+      headers.set("Authorization", `Bearer ${token}`);
     }
 
     try {
@@ -59,47 +50,21 @@ export class ApiClient {
         headers,
       });
 
-      // If 401, clear token and redirect to login
       if (response.status === 401) {
-        console.error(
-          "401 Unauthorized - Clearing token",
-        );
-
         this.setToken(null);
 
-        localStorage.removeItem("token");
-        localStorage.removeItem("user");
+        if (typeof window !== "undefined") {
+          localStorage.removeItem("user");
+          window.location.href = "/login";
+        }
 
-        window.location.href = "/login";
-
-        throw new Error(
-          "Session expired. Please login again.",
-        );
+        throw new Error("Session expired. Please login again.");
       }
 
-      /*
-       * 204 No Content
-       *
-       * DELETE endpoints such as:
-       * DELETE /boards/:id
-       * DELETE /boards/:id/members/:userId
-       *
-       * return 204 without a response body.
-       *
-       * Calling response.json() on an empty response
-       * causes:
-       * "Unexpected end of JSON input"
-       */
       if (response.status === 204) {
         return undefined as T;
       }
 
-      /*
-       * Read response body as text first.
-       *
-       * This also safely handles successful responses
-       * that have an empty body.
-       */
       const text = await response.text();
 
       let data: unknown = undefined;
@@ -108,12 +73,10 @@ export class ApiClient {
         try {
           data = JSON.parse(text);
         } catch {
-          // Keep data undefined if response is not valid JSON
           data = text;
         }
       }
 
-      // Handle HTTP errors
       if (!response.ok) {
         let errorMessage = "Something went wrong";
 
@@ -122,17 +85,25 @@ export class ApiClient {
           typeof data === "object" &&
           "error" in data
         ) {
-          errorMessage = String(
-            (data as { error: unknown }).error,
-          );
+          const error = data.error;
+
+          if (
+            error &&
+            typeof error === "object" &&
+            "message" in error &&
+            typeof error.message === "string"
+          ) {
+            errorMessage = error.message;
+          } else if (typeof error === "string") {
+            errorMessage = error;
+          }
         } else if (
           data &&
           typeof data === "object" &&
-          "message" in data
+          "message" in data &&
+          typeof data.message === "string"
         ) {
-          errorMessage = String(
-            (data as { message: unknown }).message,
-          );
+          errorMessage = data.message;
         } else if (typeof data === "string" && data) {
           errorMessage = data;
         }
@@ -164,7 +135,7 @@ export class ApiClient {
   ): Promise<T> {
     return this.request<T>(endpoint, {
       method: "POST",
-      body: body ? JSON.stringify(body) : undefined,
+      body: body !== undefined ? JSON.stringify(body) : undefined,
     });
   }
 

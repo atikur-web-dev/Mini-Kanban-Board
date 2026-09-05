@@ -1,4 +1,4 @@
-// No import needed - task is independent
+// Frontend/types/task.ts
 export interface Task {
   id: string;
   title: string;
