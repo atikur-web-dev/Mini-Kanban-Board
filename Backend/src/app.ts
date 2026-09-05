@@ -7,6 +7,8 @@ import { env } from "./config/env.js";
 import { prisma } from "./lib/prisma.js";
 import { errorHandler, notFoundHandler } from "./middleware/errorHandler.js";
 import authRoutes from "./routes/auth.routes.js";  
+import boardRoutes from "./routes/board.routes.js";
+import columnRoutes from "./routes/column.routes.js";
 
 export const app = express();
 
@@ -26,7 +28,9 @@ app.get("/health", async (_req, res, next) => {
 });
 
 // Routes
-app.use("/api/auth", authRoutes);  
+app.use("/api/auth", authRoutes); 
+app.use("/api/boards", boardRoutes); 
+app.use("/api/boards/:boardId/columns", columnRoutes);
 
 app.use(notFoundHandler);
 app.use(errorHandler);
