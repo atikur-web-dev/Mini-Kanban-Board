@@ -10,6 +10,7 @@ export interface AuthRequest extends Request {
     email: string;
     name: string;
   };
+  board?: Awaited<ReturnType<typeof prisma.board.findFirst>>;
 }
 
 export const authenticate = async (
@@ -61,6 +62,7 @@ export const authenticate = async (
     }
 
     req.user = user;
+
     next();
   } catch (error) {
     next(error);

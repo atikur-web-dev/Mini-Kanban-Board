@@ -71,7 +71,8 @@ export const checkBoardAccess = async (
       });
     }
 
-    req.body._board = board;
+    req.board = board;
+
     next();
   } catch (error) {
     next(error);
@@ -112,7 +113,8 @@ export const checkBoardOwnership = async (
       });
     }
 
-    req.body._board = board;
+    req.board = board;
+
     next();
   } catch (error) {
     next(error);
