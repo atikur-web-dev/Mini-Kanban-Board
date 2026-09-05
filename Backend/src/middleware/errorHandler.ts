@@ -1,3 +1,5 @@
+// Backend/src/middleware/errorHandler.ts
+
 import type { ErrorRequestHandler, RequestHandler } from "express";
 import { ZodError } from "zod";
 import { Prisma } from "../../generated/prisma/client.js";
@@ -8,7 +10,12 @@ export const notFoundHandler: RequestHandler = (_req, _res, next) => {
   next(new AppError(404, "Not found"));
 };
 
-export const errorHandler: ErrorRequestHandler = (err, _req, res, _next) => {
+export const errorHandler: ErrorRequestHandler = (
+  err,
+  _req,
+  res,
+  _next,
+) => {
   if (err instanceof AppError) {
     res.status(err.statusCode).json({
       error: {
@@ -39,16 +46,28 @@ export const errorHandler: ErrorRequestHandler = (err, _req, res, _next) => {
     }
 
     if (err.code === "P2002") {
-      res.status(409).json({ error: { message: "Resource already exists" } });
+      res.status(409).json({
+        error: {
+          message: "Resource already exists",
+        },
+      });
       return;
     }
 
     if (err.code === "P2025") {
-      res.status(404).json({ error: { message: "Not found" } });
+      res.status(404).json({
+        error: {
+          message: "Not found",
+        },
+      });
       return;
     }
 
-    res.status(500).json({ error: { message: "Request could not be completed" } });
+    res.status(500).json({
+      error: {
+        message: "Request could not be completed",
+      },
+    });
     return;
   }
 
@@ -56,10 +75,22 @@ export const errorHandler: ErrorRequestHandler = (err, _req, res, _next) => {
     if (env.NODE_ENV !== "production") {
       console.error(err);
     }
-    res.status(400).json({ error: { message: "Invalid request" } });
+
+    res.status(400).json({
+      error: {
+        message: "Invalid request",
+      },
+    });
     return;
   }
 
-  console.error(err);
-  res.status(500).json({ error: { message: "Internal server error" } });
+  if (env.NODE_ENV !== "production") {
+    console.error(err);
+  }
+
+  res.status(500).json({
+    error: {
+      message: "Internal server error",
+    },
+  });
 };

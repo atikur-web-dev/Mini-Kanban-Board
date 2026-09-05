@@ -1,8 +1,10 @@
-import type { Request, Response, NextFunction } from "express";
+// Backend/src/middleware/auth.middleware.ts
+
+import type { NextFunction, Request, Response } from "express";
 import jwt from "jsonwebtoken";
+import { prisma } from "../lib/prisma.js";
 import { env } from "../config/env.js";
 import { AppError } from "../utils/appError.js";
-import { prisma } from "../lib/prisma.js";
 
 export interface AuthRequest extends Request {
   user?: {
@@ -14,31 +16,37 @@ export interface AuthRequest extends Request {
 
 export const authenticate = async (
   req: AuthRequest,
-  res: Response,
-  next: NextFunction
+  _res: Response,
+  next: NextFunction,
 ) => {
   try {
     const authHeader = req.headers.authorization;
 
-    console.log("Auth Header:", authHeader); // Debug
-
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    if (!authHeader?.startsWith("Bearer ")) {
       throw new AppError(401, "Authentication required");
     }
 
-    const token = authHeader.split(" ")[1];
+    const token = authHeader.slice(7).trim();
 
     if (!token) {
       throw new AppError(401, "Authentication required");
     }
 
-    let decoded: { userId: string };
+    let decoded: unknown;
+
     try {
-      decoded = jwt.verify(token, env.JWT_SECRET) as { userId: string };
-      console.log("Decoded token:", decoded); // Debug
-    } catch (error) {
-      console.error("JWT Error:", error); // Debug
+      decoded = jwt.verify(token, env.JWT_SECRET);
+    } catch {
       throw new AppError(401, "Invalid or expired token");
+    }
+
+    if (
+      typeof decoded !== "object" ||
+      decoded === null ||
+      !("userId" in decoded) ||
+      typeof decoded.userId !== "string"
+    ) {
+      throw new AppError(401, "Invalid token");
     }
 
     const user = await prisma.user.findUnique({

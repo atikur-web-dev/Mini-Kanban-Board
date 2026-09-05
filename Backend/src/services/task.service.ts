@@ -1,14 +1,72 @@
-// Backend/src/services/task.service.ts
 import { prisma } from "../lib/prisma.js";
 import { AppError } from "../utils/appError.js";
 
 export class TaskService {
-  async createTask(columnId: string, title: string, description?: string, assigneeId?: string) {
+  private async checkBoardAccess(boardId: string, userId: string) {
+    const board = await prisma.board.findFirst({
+      where: {
+        id: boardId,
+        OR: [
+          { ownerId: userId },
+          { members: { some: { userId } } },
+        ],
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    if (!board) {
+      throw new AppError(403, "You don't have access to this board");
+    }
+  }
+
+  async createTask(
+    columnId: string,
+    userId: string,
+    title: string,
+    description?: string,
+    assigneeId?: string,
+  ) {
     if (!title || title.trim().length === 0) {
       throw new AppError(400, "Task title is required");
     }
 
-    // Get current max position in column
+    const column = await prisma.column.findUnique({
+      where: { id: columnId },
+      select: {
+        id: true,
+        boardId: true,
+      },
+    });
+
+    if (!column) {
+      throw new AppError(404, "Column not found");
+    }
+
+    await this.checkBoardAccess(column.boardId, userId);
+
+    if (assigneeId) {
+      const assignee = await prisma.boardMember.findFirst({
+        where: {
+          boardId: column.boardId,
+          userId: assigneeId,
+        },
+      });
+
+      const board = await prisma.board.findFirst({
+        where: {
+          id: column.boardId,
+          ownerId: assigneeId,
+        },
+        select: { id: true },
+      });
+
+      if (!assignee && !board) {
+        throw new AppError(400, "Assignee does not have access to this board");
+      }
+    }
+
     const lastTask = await prisma.task.findFirst({
       where: { columnId },
       orderBy: { position: "desc" },
@@ -17,7 +75,7 @@ export class TaskService {
 
     const newPosition = lastTask ? lastTask.position + 1 : 0;
 
-    const task = await prisma.task.create({
+    return prisma.task.create({
       data: {
         title: title.trim(),
         description: description?.trim() ?? null,
@@ -45,25 +103,65 @@ export class TaskService {
         },
       },
     });
-
-    return task;
   }
 
-  async updateTask(taskId: string, title?: string, description?: string, assigneeId?: string) {
+  async updateTask(
+    taskId: string,
+    userId: string,
+    title?: string,
+    description?: string,
+    assigneeId?: string | null,
+  ) {
     const task = await prisma.task.findUnique({
       where: { id: taskId },
+      include: {
+        column: {
+          select: {
+            boardId: true,
+          },
+        },
+      },
     });
 
     if (!task) {
       throw new AppError(404, "Task not found");
     }
 
-    const updatedTask = await prisma.task.update({
+    await this.checkBoardAccess(task.column.boardId, userId);
+
+    if (assigneeId) {
+      const assignee = await prisma.boardMember.findFirst({
+        where: {
+          boardId: task.column.boardId,
+          userId: assigneeId,
+        },
+      });
+
+      const board = await prisma.board.findFirst({
+        where: {
+          id: task.column.boardId,
+          ownerId: assigneeId,
+        },
+        select: { id: true },
+      });
+
+      if (!assignee && !board) {
+        throw new AppError(400, "Assignee does not have access to this board");
+      }
+    }
+
+    return prisma.task.update({
       where: { id: taskId },
       data: {
         title: title?.trim() || task.title,
-        description: description !== undefined ? description?.trim() : task.description,
-        assigneeId: assigneeId !== undefined ? assigneeId || null : task.assigneeId,
+        description:
+          description !== undefined
+            ? description?.trim() ?? null
+            : task.description,
+        assigneeId:
+          assigneeId !== undefined
+            ? assigneeId || null
+            : task.assigneeId,
       },
       include: {
         assignee: {
@@ -85,32 +183,37 @@ export class TaskService {
         },
       },
     });
-
-    return updatedTask;
   }
 
-  async deleteTask(taskId: string) {
-    // Get task info before deleting
+  async deleteTask(taskId: string, userId: string) {
     const task = await prisma.task.findUnique({
       where: { id: taskId },
-      select: { columnId: true, position: true },
+      select: {
+        columnId: true,
+        position: true,
+        column: {
+          select: {
+            boardId: true,
+          },
+        },
+      },
     });
 
     if (!task) {
       throw new AppError(404, "Task not found");
     }
 
-    // Delete task and reorder remaining tasks
+    await this.checkBoardAccess(task.column.boardId, userId);
+
     await prisma.$transaction(async (tx) => {
-      // Delete the task
       await tx.task.delete({
         where: { id: taskId },
       });
 
-      // Reorder remaining tasks in the same column
       const remainingTasks = await tx.task.findMany({
         where: { columnId: task.columnId },
         orderBy: { position: "asc" },
+        select: { id: true },
       });
 
       for (let i = 0; i < remainingTasks.length; i++) {
@@ -122,8 +225,12 @@ export class TaskService {
     });
   }
 
-  async moveTask(taskId: string, targetColumnId: string, targetPosition: number) {
-    // Get task with column info
+  async moveTask(
+    taskId: string,
+    userId: string,
+    targetColumnId: string,
+    targetPosition: number,
+  ) {
     const task = await prisma.task.findUnique({
       where: { id: taskId },
       include: {
@@ -140,46 +247,56 @@ export class TaskService {
       throw new AppError(404, "Task not found");
     }
 
-    // Validate target column exists
+    await this.checkBoardAccess(task.column.boardId, userId);
+
     const targetColumn = await prisma.column.findUnique({
       where: { id: targetColumnId },
-      select: { id: true, boardId: true },
+      select: {
+        id: true,
+        boardId: true,
+      },
     });
 
     if (!targetColumn) {
       throw new AppError(404, "Target column not found");
     }
 
-    // Validate same board
     if (task.column.boardId !== targetColumn.boardId) {
-      throw new AppError(400, "Cannot move task to a column in a different board");
+      throw new AppError(
+        400,
+        "Cannot move task to a column in a different board",
+      );
     }
 
-    // Validate position
     const tasksInTargetColumn = await prisma.task.findMany({
       where: { columnId: targetColumnId },
       orderBy: { position: "asc" },
-      select: { id: true, position: true },
+      select: {
+        id: true,
+        position: true,
+      },
     });
 
-    if (targetPosition < 0 || targetPosition > tasksInTargetColumn.length) {
+    if (
+      targetPosition < 0 ||
+      targetPosition > tasksInTargetColumn.length
+    ) {
       throw new AppError(400, "Invalid position");
     }
 
-    // If moving to same column and same position, do nothing
-    if (task.columnId === targetColumnId && task.position === targetPosition) {
+    if (
+      task.columnId === targetColumnId &&
+      task.position === targetPosition
+    ) {
       return task;
     }
 
-    // Perform move with transaction
-    const result = await prisma.$transaction(async (tx) => {
-      // If moving within same column
+    return prisma.$transaction(async (tx) => {
       if (task.columnId === targetColumnId) {
         const oldPosition = task.position;
         const newPosition = targetPosition;
 
         if (oldPosition < newPosition) {
-          // Moving down: shift tasks between old+1 and new up
           await tx.task.updateMany({
             where: {
               columnId: targetColumnId,
@@ -195,7 +312,6 @@ export class TaskService {
             },
           });
         } else if (oldPosition > newPosition) {
-          // Moving up: shift tasks between new and old-1 down
           await tx.task.updateMany({
             where: {
               columnId: targetColumnId,
@@ -212,67 +328,9 @@ export class TaskService {
           });
         }
 
-        // Update task position
-        return await tx.task.update({
-          where: { id: taskId },
-          data: { position: targetPosition },
-          include: {
-            assignee: {
-              select: {
-                id: true,
-                name: true,
-                email: true,
-              },
-            },
-            column: {
-              include: {
-                board: {
-                  select: {
-                    id: true,
-                    name: true,
-                  },
-                },
-              },
-            },
-          },
-        });
-      } else {
-        // Moving to different column
-        // Step 1: Remove from old column - shift remaining tasks up
-        await tx.task.updateMany({
-          where: {
-            columnId: task.columnId,
-            position: {
-              gt: task.position,
-            },
-          },
-          data: {
-            position: {
-              decrement: 1,
-            },
-          },
-        });
-
-        // Step 2: Insert into new column - shift existing tasks down
-        await tx.task.updateMany({
-          where: {
-            columnId: targetColumnId,
-            position: {
-              gte: targetPosition,
-            },
-          },
-          data: {
-            position: {
-              increment: 1,
-            },
-          },
-        });
-
-        // Step 3: Update the task
-        return await tx.task.update({
+        return tx.task.update({
           where: { id: taskId },
           data: {
-            columnId: targetColumnId,
             position: targetPosition,
           },
           include: {
@@ -296,12 +354,65 @@ export class TaskService {
           },
         });
       }
-    });
 
-    return result;
+      await tx.task.updateMany({
+        where: {
+          columnId: task.columnId,
+          position: {
+            gt: task.position,
+          },
+        },
+        data: {
+          position: {
+            decrement: 1,
+          },
+        },
+      });
+
+      await tx.task.updateMany({
+        where: {
+          columnId: targetColumnId,
+          position: {
+            gte: targetPosition,
+          },
+        },
+        data: {
+          position: {
+            increment: 1,
+          },
+        },
+      });
+
+      return tx.task.update({
+        where: { id: taskId },
+        data: {
+          columnId: targetColumnId,
+          position: targetPosition,
+        },
+        include: {
+          assignee: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+            },
+          },
+          column: {
+            include: {
+              board: {
+                select: {
+                  id: true,
+                  name: true,
+                },
+              },
+            },
+          },
+        },
+      });
+    });
   }
 
-  async getTaskById(taskId: string) {
+  async getTaskById(taskId: string, userId: string) {
     const task = await prisma.task.findUnique({
       where: { id: taskId },
       include: {
@@ -329,6 +440,8 @@ export class TaskService {
     if (!task) {
       throw new AppError(404, "Task not found");
     }
+
+    await this.checkBoardAccess(task.column.board.id, userId);
 
     return task;
   }
