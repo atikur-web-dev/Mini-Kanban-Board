@@ -1,3 +1,4 @@
+// Backend/src/lib/prisma.ts
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "../../generated/prisma/client.js";
 import { env } from "../config/env.js";
