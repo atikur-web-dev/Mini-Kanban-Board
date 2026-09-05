@@ -7,6 +7,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useBoard } from "@/context/BoardContext";
 import { Loader } from "@/components/ui/Loader";
 import { Button } from "@/components/ui/Button";
+import toast from "react-hot-toast";
 
 const getErrorMessage = (error: unknown): string => {
   if (error instanceof Error) return error.message;
@@ -25,7 +26,6 @@ export default function DashboardPage() {
   const [newBoardName, setNewBoardName] = useState("");
   const [error, setError] = useState("");
   
-  // ✅ Use typeof window check directly - no state
   const isClient = typeof window !== "undefined";
 
   useEffect(() => {
@@ -48,21 +48,41 @@ export default function DashboardPage() {
       setShowCreateModal(false);
       setNewBoardName("");
       setError("");
+      toast.success("Board created successfully");
     } catch (err: unknown) {
-      setError(getErrorMessage(err));
+      const msg = getErrorMessage(err);
+      setError(msg);
+      toast.error(msg);
     }
   };
 
   const handleDeleteBoard = async (id: string, name: string) => {
-    if (!confirm(`Are you sure you want to delete "${name}"?`)) return;
-    try {
-      await deleteBoard(id);
-    } catch (err: unknown) {
-      alert("Failed to delete board: " + getErrorMessage(err));
-    }
+    toast((t) => (
+      <div className="flex items-center gap-3">
+        <span>Delete board &ldquo;{name}&rdquo;?</span>
+        <button
+          onClick={() => {
+            toast.dismiss(t.id);
+            deleteBoard(id);
+            toast.success("Board deleted");
+          }}
+          className="px-3 py-1 bg-red-500 text-white text-sm rounded hover:bg-red-600"
+        >
+          Delete
+        </button>
+        <button
+          onClick={() => toast.dismiss(t.id)}
+          className="px-3 py-1 bg-gray-300 text-gray-700 text-sm rounded hover:bg-gray-400"
+        >
+          Cancel
+        </button>
+      </div>
+    ), {
+      duration: 5000,
+    });
   };
 
-  // ✅ Show loader on server side
+  // Show loader on server side
   if (!isClient) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -103,7 +123,7 @@ export default function DashboardPage() {
         {/* Create Board Button */}
         <div className="mb-6">
           <Button onClick={() => setShowCreateModal(true)}>
-            + New Board
+            New Board
           </Button>
         </div>
 
@@ -189,4 +209,4 @@ export default function DashboardPage() {
       </main>
     </div>
   );
-} 
+}

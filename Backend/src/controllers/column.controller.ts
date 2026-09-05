@@ -46,6 +46,35 @@ export class ColumnController {
         return res.status(400).json({ error: "Invalid column ID" });
       }
 
+      // ✅ Check if user has access to the column's board
+      const column = await prisma.column.findUnique({
+        where: { id: columnId },
+        include: {
+          board: {
+            include: {
+              members: true,
+            },
+          },
+        },
+      });
+
+      if (!column) {
+        return res.status(404).json({ error: "Column not found" });
+      }
+
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(401).json({ error: "Authentication required" });
+      }
+
+      // Check if user is owner or member of the board
+      const isOwner = column.board.ownerId === userId;
+      const isMember = column.board.members.some((m) => m.userId === userId);
+
+      if (!isOwner && !isMember) {
+        return res.status(403).json({ error: "You don't have access to this column" });
+      }
+
       await columnService.deleteColumn(columnId);
       res.status(204).send();
     } catch (error) {

@@ -3,6 +3,7 @@
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Task } from "@/types";
+import toast from "react-hot-toast";
 
 interface TaskCardProps {
   task: Task;
@@ -33,6 +34,35 @@ export function TaskCard({ task, onDelete, onMove, columns }: TaskCardProps) {
     opacity: isDragging ? 0.5 : 1,
   };
 
+  const handleDelete = () => {
+    toast(
+      (t) => (
+        <div className="flex items-center gap-3">
+          <span>Delete task &ldquo;{task.title}&rdquo;?</span>
+          <button
+            onClick={() => {
+              toast.dismiss(t.id);
+              onDelete(task.id);
+              toast.success("Task deleted");
+            }}
+            className="px-3 py-1 bg-red-500 text-white text-sm rounded hover:bg-red-600"
+          >
+            Delete
+          </button>
+          <button
+            onClick={() => toast.dismiss(t.id)}
+            className="px-3 py-1 bg-gray-300 text-gray-700 text-sm rounded hover:bg-gray-400"
+          >
+            Cancel
+          </button>
+        </div>
+      ),
+      {
+        duration: 5000,
+      },
+    );
+  };
+
   return (
     <div
       ref={setNodeRef}
@@ -56,30 +86,32 @@ export function TaskCard({ task, onDelete, onMove, columns }: TaskCardProps) {
         <button
           onClick={(e) => {
             e.stopPropagation();
-            onDelete(task.id);
+            handleDelete();
           }}
-          className="text-red-400 hover:text-red-600 text-sm ml-2 shrink-0"
+          className="text-red-400 hover:text-red-600 text-sm ml-2 flex-shrink-0"
         >
-          ×
+          Delete
         </button>
       </div>
 
       {/* Move to other columns */}
       <div className="mt-2 flex gap-1 flex-wrap">
-        {columns.map((col) => (
-          col.id !== task.columnId && (
-            <button
-              key={col.id}
-              onClick={(e) => {
-                e.stopPropagation();
-                onMove(task.id, col.id);
-              }}
-              className="text-xs bg-gray-100 hover:bg-gray-200 px-2 py-0.5 rounded transition-colors"
-            >
-              → {col.name}
-            </button>
-          )
-        ))}
+        {columns.map(
+          (col) =>
+            col.id !== task.columnId && (
+              <button
+                key={col.id}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onMove(task.id, col.id);
+                  toast.success(`Task moved to "${col.name}"`);
+                }}
+                className="text-xs bg-gray-100 hover:bg-gray-200 px-2 py-0.5 rounded transition-colors"
+              >
+                Move to {col.name}
+              </button>
+            ),
+        )}
       </div>
     </div>
   );

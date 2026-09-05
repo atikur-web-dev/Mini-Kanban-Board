@@ -1,4 +1,3 @@
-// Backend/src/routes/column.routes.ts
 import { Router } from "express";
 import { ColumnController } from "../controllers/column.controller.js";
 import { authenticate } from "../middleware/auth.middleware.js";
@@ -24,6 +23,7 @@ const updateColumnSchema = z.object({
 // All routes require authentication
 router.use(authenticate);
 
+// Column routes - Note: checkBoardAccess needs boardId from params
 router.post(
   "/",
   validate(createColumnSchema),
@@ -31,16 +31,15 @@ router.post(
   columnController.createColumn.bind(columnController)
 );
 
+// ✅ FIX: Use correct route for column operations
 router.patch(
   "/:columnId",
   validate(updateColumnSchema),
-  checkBoardAccess,
   columnController.updateColumn.bind(columnController)
 );
 
 router.delete(
   "/:columnId",
-  checkBoardAccess,
   columnController.deleteColumn.bind(columnController)
 );
 

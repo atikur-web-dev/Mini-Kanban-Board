@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/Button";
 import { Column as ColumnComponent } from "@/components/column/Column";
 import { Column } from "@/types";
 import { BoardMember } from "@/lib/api/board";
+import toast from "react-hot-toast";
 
 const getErrorMessage = (error: unknown): string => {
   if (error instanceof Error) return error.message;
@@ -37,6 +38,7 @@ export default function BoardPage() {
     fetchBoard,
     createColumn,
     deleteColumn,
+    updateColumn,
     createTask,
     deleteTask,
     moveTask,
@@ -53,14 +55,13 @@ export default function BoardPage() {
   const [selectedColumnId, setSelectedColumnId] = useState<string | null>(null);
   const [error, setError] = useState("");
   const [activeId, setActiveId] = useState<string | null>(null);
-  
+
   // Members Modal states
   const [showMembersModal, setShowMembersModal] = useState(false);
   const [boardMembers, setBoardMembers] = useState<BoardMember[]>([]);
   const [shareEmail, setShareEmail] = useState("");
   const [shareError, setShareError] = useState("");
 
-  // ✅ Fix: Use typeof window check instead of state
   const isClient = typeof window !== "undefined";
 
   useEffect(() => {
@@ -94,19 +95,46 @@ export default function BoardPage() {
       setShareEmail("");
       setShareError("");
       await fetchMembers();
+      toast.success("Board shared successfully");
     } catch (err: unknown) {
-      setShareError(getErrorMessage(err));
+      const errorMsg = getErrorMessage(err);
+      if (errorMsg.includes("User not found")) {
+        setShareError("User not found. Please ask them to register first.");
+      } else {
+        setShareError(errorMsg);
+      }
+      toast.error(getErrorMessage(err));
     }
   };
 
   const handleRemoveMember = async (userId: string, name: string) => {
-    if (!confirm(`Are you sure you want to remove "${name}" from this board?`)) return;
-    try {
-      await removeMember(boardId, userId);
-      await fetchMembers();
-    } catch (err: unknown) {
-      alert("Failed to remove member: " + getErrorMessage(err));
-    }
+    toast(
+      (t) => (
+        <div className="flex items-center gap-3">
+          <span>Remove &ldquo;{name}&rdquo; from board?</span>
+          <button
+            onClick={() => {
+              toast.dismiss(t.id);
+              removeMember(boardId, userId);
+              fetchMembers();
+              toast.success("Member removed");
+            }}
+            className="px-3 py-1 bg-red-500 text-white text-sm rounded hover:bg-red-600"
+          >
+            Remove
+          </button>
+          <button
+            onClick={() => toast.dismiss(t.id)}
+            className="px-3 py-1 bg-gray-300 text-gray-700 text-sm rounded hover:bg-gray-400"
+          >
+            Cancel
+          </button>
+        </div>
+      ),
+      {
+        duration: 5000,
+      },
+    );
   };
 
   const handleCreateColumn = async (e: React.FormEvent) => {
@@ -121,8 +149,10 @@ export default function BoardPage() {
       setShowColumnModal(false);
       setNewColumnName("");
       setError("");
+      toast.success("Column created successfully");
     } catch (err: unknown) {
       setError(getErrorMessage(err));
+      toast.error(getErrorMessage(err));
     }
   };
 
@@ -137,29 +167,36 @@ export default function BoardPage() {
       await createTask(
         selectedColumnId,
         newTaskTitle.trim(),
-        newTaskDescription.trim() || undefined
+        newTaskDescription.trim() || undefined,
       );
       setShowTaskModal(false);
       setNewTaskTitle("");
       setNewTaskDescription("");
       setSelectedColumnId(null);
       setError("");
+      toast.success("Task created successfully");
     } catch (err: unknown) {
       setError(getErrorMessage(err));
+      toast.error(getErrorMessage(err));
     }
   };
 
-  const handleDeleteColumn = async (columnId: string, name: string) => {
-    if (
-      !confirm(
-        `Are you sure you want to delete column "${name}"? All tasks will be deleted.`
-      )
-    )
-      return;
+  const handleDeleteColumn = async (columnId: string) => {
     try {
       await deleteColumn(columnId);
+      toast.success("Column deleted successfully");
     } catch (err: unknown) {
-      alert("Failed to delete column: " + getErrorMessage(err));
+      toast.error(getErrorMessage(err));
+    }
+  };
+
+  const handleUpdateColumn = async (columnId: string, name: string) => {
+    try {
+      await updateColumn(columnId, name);
+      toast.success("Column updated successfully");
+    } catch (err: unknown) {
+      toast.error(getErrorMessage(err));
+      throw err;
     }
   };
 
@@ -167,22 +204,43 @@ export default function BoardPage() {
     const task = currentBoard?.columns
       .flatMap((col) => col.tasks)
       .find((t) => t.id === taskId);
-    
+
     if (!task) return;
-    
-    if (!confirm(`Are you sure you want to delete task "${task.title}"?`)) return;
-    try {
-      await deleteTask(taskId);
-    } catch (err: unknown) {
-      alert("Failed to delete task: " + getErrorMessage(err));
-    }
+
+    toast(
+      (t) => (
+        <div className="flex items-center gap-3">
+          <span>Delete task &ldquo;{task.title}&rdquo;?</span>
+          <button
+            onClick={() => {
+              toast.dismiss(t.id);
+              deleteTask(taskId);
+              toast.success("Task deleted");
+            }}
+            className="px-3 py-1 bg-red-500 text-white text-sm rounded hover:bg-red-600"
+          >
+            Delete
+          </button>
+          <button
+            onClick={() => toast.dismiss(t.id)}
+            className="px-3 py-1 bg-gray-300 text-gray-700 text-sm rounded hover:bg-gray-400"
+          >
+            Cancel
+          </button>
+        </div>
+      ),
+      {
+        duration: 5000,
+      },
+    );
   };
 
   const handleMoveTask = async (taskId: string, targetColumnId: string) => {
     try {
       await moveTask(taskId, targetColumnId, 0);
+      toast.success("Task moved successfully");
     } catch (err: unknown) {
-      alert("Failed to move task: " + getErrorMessage(err));
+      toast.error(getErrorMessage(err));
     }
   };
 
@@ -220,7 +278,7 @@ export default function BoardPage() {
       if (targetTask) {
         targetColumnId = targetTask.columnId;
         const column = currentBoard?.columns.find(
-          (col) => col.id === targetColumnId
+          (col) => col.id === targetColumnId,
         );
         const taskIndex = column?.tasks.findIndex((t) => t.id === overId) ?? 0;
         targetPosition = taskIndex + 1;
@@ -231,22 +289,23 @@ export default function BoardPage() {
 
     if (activeTask.columnId === targetColumnId) {
       const column = currentBoard?.columns.find(
-        (col) => col.id === targetColumnId
+        (col) => col.id === targetColumnId,
       );
       const currentIndex = column?.tasks.findIndex(
-        (t) => t.id === activeTaskId
+        (t) => t.id === activeTaskId,
       );
       if (currentIndex === targetPosition - 1) return;
     }
 
     try {
       await moveTask(activeTaskId, targetColumnId, targetPosition);
+      toast.success("Task moved successfully");
     } catch (err: unknown) {
-      alert("Failed to move task: " + getErrorMessage(err));
+      toast.error(getErrorMessage(err));
     }
   };
 
-  // ✅ Fix: Show loader on server-side
+  // Show loader on server-side
   if (!isClient) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -255,7 +314,7 @@ export default function BoardPage() {
     );
   }
 
-  // ✅ Show loader while loading
+  // Show loader while loading
   if (loading && !currentBoard) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -264,7 +323,7 @@ export default function BoardPage() {
     );
   }
 
-  // ✅ Show "Board not found" only after loading is complete
+  // Show "Board not found" only after loading is complete
   if (!currentBoard && !loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -281,7 +340,7 @@ export default function BoardPage() {
     );
   }
 
-  // ✅ Fix: currentBoard is not null here, so safe to use
+  // Fix: currentBoard is not null here, so safe to use
   const allColumns = currentBoard!.columns.map((col) => ({
     id: col.id,
     name: col.name,
@@ -293,7 +352,10 @@ export default function BoardPage() {
       <header className="bg-white shadow">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
           <div className="flex items-center gap-4">
-            <Link href="/dashboard" className="text-gray-500 hover:text-gray-700">
+            <Link
+              href="/dashboard"
+              className="text-gray-500 hover:text-gray-700"
+            >
               ← Back
             </Link>
             <h1 className="text-2xl font-bold text-gray-900">
@@ -309,10 +371,10 @@ export default function BoardPage() {
               size="sm"
               variant="outline"
             >
-              👥 Members
+              Members
             </Button>
             <Button onClick={() => setShowColumnModal(true)} size="sm">
-              + Add Column
+              Add Column
             </Button>
           </div>
         </div>
@@ -328,7 +390,9 @@ export default function BoardPage() {
           <div className="flex gap-6 overflow-x-auto pb-4">
             {currentBoard!.columns?.length === 0 ? (
               <div className="w-full text-center py-12 bg-white rounded-lg shadow">
-                <p className="text-gray-500">No columns yet. Add your first column!</p>
+                <p className="text-gray-500">
+                  No columns yet. Add your first column!
+                </p>
               </div>
             ) : (
               currentBoard!.columns?.map((column: Column) => (
@@ -337,6 +401,7 @@ export default function BoardPage() {
                   column={column}
                   allColumns={allColumns}
                   onDeleteColumn={handleDeleteColumn}
+                  onUpdateColumn={handleUpdateColumn}
                   onAddTask={(colId) => {
                     setSelectedColumnId(colId);
                     setShowTaskModal(true);
@@ -453,7 +518,9 @@ export default function BoardPage() {
           <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center p-4 z-50">
             <div className="bg-white rounded-lg max-w-md w-full p-6">
               <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-medium text-gray-900">Board Members</h3>
+                <h3 className="text-lg font-medium text-gray-900">
+                  Board Members
+                </h3>
                 <button
                   onClick={() => setShowMembersModal(false)}
                   className="text-gray-400 hover:text-gray-600"
@@ -489,22 +556,37 @@ export default function BoardPage() {
                 {/* Owner */}
                 <div className="flex justify-between items-center p-2 bg-gray-50 rounded">
                   <div>
-                    <p className="font-medium text-gray-900">{currentBoard!.owner.name}</p>
-                    <p className="text-sm text-gray-500">{currentBoard!.owner.email}</p>
+                    <p className="font-medium text-gray-900">
+                      {currentBoard!.owner.name}
+                    </p>
+                    <p className="text-sm text-gray-500">
+                      {currentBoard!.owner.email}
+                    </p>
                   </div>
-                  <span className="text-xs bg-indigo-100 text-indigo-700 px-2 py-1 rounded">Owner</span>
+                  <span className="text-xs bg-indigo-100 text-indigo-700 px-2 py-1 rounded">
+                    Owner
+                  </span>
                 </div>
 
                 {/* Members */}
                 {boardMembers.map((member) => (
-                  <div key={member.id} className="flex justify-between items-center p-2 bg-gray-50 rounded">
+                  <div
+                    key={member.id}
+                    className="flex justify-between items-center p-2 bg-gray-50 rounded"
+                  >
                     <div>
-                      <p className="font-medium text-gray-900">{member.user.name}</p>
-                      <p className="text-sm text-gray-500">{member.user.email}</p>
+                      <p className="font-medium text-gray-900">
+                        {member.user.name}
+                      </p>
+                      <p className="text-sm text-gray-500">
+                        {member.user.email}
+                      </p>
                     </div>
                     {member.user.id !== currentBoard!.ownerId && (
                       <button
-                        onClick={() => handleRemoveMember(member.user.id, member.user.name)}
+                        onClick={() =>
+                          handleRemoveMember(member.user.id, member.user.name)
+                        }
                         className="text-red-500 hover:text-red-700 text-sm"
                       >
                         Remove
@@ -514,7 +596,9 @@ export default function BoardPage() {
                 ))}
 
                 {boardMembers.length === 0 && (
-                  <p className="text-gray-500 text-sm text-center py-4">No members yet</p>
+                  <p className="text-gray-500 text-sm text-center py-4">
+                    No members yet
+                  </p>
                 )}
               </div>
             </div>
