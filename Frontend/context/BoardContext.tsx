@@ -26,7 +26,7 @@ interface BoardContextType {
   deleteBoard: (id: string) => Promise<void>;
   shareBoard: (boardId: string, email: string) => Promise<void>;
   removeMember: (boardId: string, userId: string) => Promise<void>;
-  getBoardMembers: (boardId: string) => Promise<BoardMember[]>; // ✅ Add this
+  getBoardMembers: (boardId: string) => Promise<BoardMember[]>;
   createColumn: (boardId: string, name: string) => Promise<Column>;
   updateColumn: (columnId: string, name: string) => Promise<Column>;
   deleteColumn: (columnId: string) => Promise<void>;
@@ -150,7 +150,6 @@ export function BoardProvider({ children }: { children: ReactNode }) {
     }
   }, [fetchBoard]);
 
-  // ✅ Add this function
   const getBoardMembers = useCallback(async (boardId: string) => {
     setLoading(true);
     setError(null);
@@ -197,6 +196,7 @@ export function BoardProvider({ children }: { children: ReactNode }) {
     }
   }, [currentBoard, fetchBoard]);
 
+  // ✅ Only ONE deleteColumn function
   const deleteColumn = useCallback(async (columnId: string) => {
     setLoading(true);
     setError(null);
@@ -248,20 +248,20 @@ export function BoardProvider({ children }: { children: ReactNode }) {
   }, [currentBoard, fetchBoard]);
 
   const deleteTask = useCallback(async (taskId: string) => {
-    setLoading(true);
-    setError(null);
-    try {
-      await taskApi.delete(taskId);
-      if (currentBoard) {
-        await fetchBoard(currentBoard.id);
-      }
-    } catch (err: unknown) {
-      setError(getErrorMessage(err));
-      throw err;
-    } finally {
-      setLoading(false);
+  setLoading(true);
+  setError(null);
+  try {
+    await taskApi.delete(taskId);
+    if (currentBoard) {
+      await fetchBoard(currentBoard.id);
     }
-  }, [currentBoard, fetchBoard]);
+  } catch (err: unknown) {
+    setError(getErrorMessage(err));
+    throw err;
+  } finally {
+    setLoading(false);
+  }
+}, [currentBoard, fetchBoard]);
 
   const moveTask = useCallback(async (taskId: string, targetColumnId: string, targetPosition: number) => {
     setLoading(true);
@@ -292,7 +292,7 @@ export function BoardProvider({ children }: { children: ReactNode }) {
     deleteBoard,
     shareBoard,
     removeMember,
-    getBoardMembers, // ✅ Add this
+    getBoardMembers,
     createColumn,
     updateColumn,
     deleteColumn,

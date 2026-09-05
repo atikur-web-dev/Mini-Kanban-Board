@@ -57,9 +57,9 @@ router.patch(
   taskController.updateTask.bind(taskController)
 );
 
+// Delete task
 router.delete(
   "/:taskId",
-  // checkBoardAccess,  // Comment this out
   taskController.deleteTask.bind(taskController)
 );
 

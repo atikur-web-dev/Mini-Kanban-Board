@@ -39,19 +39,19 @@ export class TaskController {
   }
 
   async deleteTask(req: AuthRequest, res: Response, next: NextFunction) {
-    try {
-      const { taskId } = req.params;
+  try {
+    const { taskId } = req.params;
 
-      if (!taskId || typeof taskId !== 'string') {
-        return res.status(400).json({ error: "Invalid task ID" });
-      }
-
-      await taskService.deleteTask(taskId);
-      res.status(204).send();
-    } catch (error) {
-      next(error);
+    if (!taskId || typeof taskId !== 'string') {
+      return res.status(400).json({ error: "Invalid task ID" });
     }
+
+    await taskService.deleteTask(taskId);
+    res.status(200).json({ message: "Task deleted successfully" });
+  } catch (error) {
+    next(error);
   }
+}
 
   async moveTask(req: AuthRequest, res: Response, next: NextFunction) {
     try {

@@ -1,11 +1,10 @@
 import { Router } from "express";
 import { ColumnController } from "../controllers/column.controller.js";
 import { authenticate } from "../middleware/auth.middleware.js";
-import { checkBoardAccess } from "../middleware/boardAuth.middleware.js";
 import { validate } from "../middleware/validate.middleware.js";
 import { z } from "zod";
 
-const router = Router({ mergeParams: true });
+const router = Router();
 const columnController = new ColumnController();
 
 const createColumnSchema = z.object({
@@ -22,24 +21,24 @@ const updateColumnSchema = z.object({
 
 router.use(authenticate);
 
+// Create column
 router.post(
   "/",
   validate(createColumnSchema),
-  checkBoardAccess,
   columnController.createColumn.bind(columnController)
 );
 
-// ✅ DELETE route - No middleware needed
-router.delete(
-  "/:columnId",
-  columnController.deleteColumn.bind(columnController)
-);
-
-// ✅ UPDATE route - No middleware needed
+// Update column
 router.patch(
   "/:columnId",
   validate(updateColumnSchema),
   columnController.updateColumn.bind(columnController)
+);
+
+// Delete column
+router.delete(
+  "/:columnId",
+  columnController.deleteColumn.bind(columnController)
 );
 
 export default router;

@@ -7,8 +7,8 @@ import toast from "react-hot-toast";
 
 interface TaskCardProps {
   task: Task;
-  onDelete: (taskId: string) => void;
-  onMove: (taskId: string, targetColumnId: string) => void;
+  onDelete: (taskId: string) => Promise<void>;
+  onMove: (taskId: string, targetColumnId: string) => Promise<void>;
   columns: { id: string; name: string }[];
 }
 
@@ -35,32 +35,43 @@ export function TaskCard({ task, onDelete, onMove, columns }: TaskCardProps) {
   };
 
   const handleDelete = () => {
-    toast(
-      (t) => (
-        <div className="flex items-center gap-3">
-          <span>Delete task &ldquo;{task.title}&rdquo;?</span>
-          <button
-            onClick={() => {
-              toast.dismiss(t.id);
-              onDelete(task.id);
-              toast.success("Task deleted");
-            }}
-            className="px-3 py-1 bg-red-500 text-white text-sm rounded hover:bg-red-600"
-          >
-            Delete
-          </button>
-          <button
-            onClick={() => toast.dismiss(t.id)}
-            className="px-3 py-1 bg-gray-300 text-gray-700 text-sm rounded hover:bg-gray-400"
-          >
-            Cancel
-          </button>
-        </div>
-      ),
-      {
-        duration: 5000,
-      },
-    );
+    toast((t) => (
+      <div className="flex items-center gap-3">
+        <span>Delete task &ldquo;{task.title}&rdquo;?</span>
+        <button
+          onClick={async () => {
+            toast.dismiss(t.id);
+            try {
+              await onDelete(task.id);
+              toast.success("Task deleted successfully");
+            } catch {
+              toast.error("Failed to delete task");
+            }
+          }}
+          className="px-3 py-1 bg-red-500 text-white text-sm rounded hover:bg-red-600"
+        >
+          Delete
+        </button>
+        <button
+          onClick={() => toast.dismiss(t.id)}
+          className="px-3 py-1 bg-gray-300 text-gray-700 text-sm rounded hover:bg-gray-400"
+        >
+          Cancel
+        </button>
+      </div>
+    ), {
+      duration: 5000,
+    });
+  };
+
+  const handleMove = async (targetColumnId: string) => {
+    try {
+      await onMove(task.id, targetColumnId);
+      const column = columns.find((c) => c.id === targetColumnId);
+      toast.success(`Task moved to "${column?.name || "new column"}"`);
+    } catch {
+      toast.error("Failed to move task");
+    }
   };
 
   return (
@@ -94,7 +105,6 @@ export function TaskCard({ task, onDelete, onMove, columns }: TaskCardProps) {
         </button>
       </div>
 
-      {/* Move to other columns */}
       <div className="mt-2 flex gap-1 flex-wrap">
         {columns.map(
           (col) =>
@@ -103,14 +113,13 @@ export function TaskCard({ task, onDelete, onMove, columns }: TaskCardProps) {
                 key={col.id}
                 onClick={(e) => {
                   e.stopPropagation();
-                  onMove(task.id, col.id);
-                  toast.success(`Task moved to "${col.name}"`);
+                  handleMove(col.id);
                 }}
                 className="text-xs bg-gray-100 hover:bg-gray-200 px-2 py-0.5 rounded transition-colors"
               >
                 Move to {col.name}
               </button>
-            ),
+            )
         )}
       </div>
     </div>

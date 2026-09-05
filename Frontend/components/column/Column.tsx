@@ -16,8 +16,8 @@ interface ColumnProps {
   onDeleteColumn: (columnId: string) => void;
   onUpdateColumn: (columnId: string, name: string) => Promise<void>;
   onAddTask: (columnId: string) => void;
-  onDeleteTask: (taskId: string) => void;
-  onMoveTask: (taskId: string, targetColumnId: string) => void;
+  onDeleteTask: (taskId: string) => Promise<void>;  // ✅ Promise
+  onMoveTask: (taskId: string, targetColumnId: string) => Promise<void>;  // ✅ Promise
 }
 
 export function Column({
@@ -59,9 +59,14 @@ const handleDeleteColumn = () => {
     <div className="flex items-center gap-3">
       <span>Delete column &ldquo;{column.name}&rdquo;?</span>
       <button
-        onClick={() => {
+        onClick={async () => {
           toast.dismiss(t.id);
-          onDeleteColumn(column.id);
+          try {
+            await onDeleteColumn(column.id);
+            toast.success("Column deleted");
+          } catch (error) {
+            toast.error("Failed to delete column");
+          }
         }}
         className="px-3 py-1 bg-red-500 text-white text-sm rounded hover:bg-red-600"
       >
