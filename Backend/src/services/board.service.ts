@@ -7,46 +7,44 @@ export class BoardService {
       throw new AppError(400, "Board name is required");
     }
 
-    const board = await prisma.$transaction(async (tx) => {
-      const newBoard = await tx.board.create({
-        data: {
-          name: name.trim(),
-          ownerId: userId,
-          columns: {
-            create: [
-              { name: "To Do", position: 0 },
-              { name: "In Progress", position: 1 },
-              { name: "Done", position: 2 },
-            ],
+    return prisma.board.create({
+      data: {
+        name: name.trim(),
+        ownerId: userId,
+        columns: {
+          create: [
+            { name: "To Do", position: 0 },
+            { name: "In Progress", position: 1 },
+            { name: "Done", position: 2 },
+          ],
+        },
+      },
+      include: {
+        owner: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
           },
         },
-        include: {
-          owner: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-            },
+        columns: {
+          orderBy: {
+            position: "asc",
           },
-          columns: {
-            orderBy: { position: "asc" },
-            include: {
-              tasks: {
-                orderBy: { position: "asc" },
+          include: {
+            tasks: {
+              orderBy: {
+                position: "asc",
               },
             },
           },
         },
-      });
-
-      return newBoard;
+      },
     });
-
-    return board;
   }
 
   async getUserBoards(userId: string) {
-    const boards = await prisma.board.findMany({
+    return prisma.board.findMany({
       where: {
         OR: [
           { ownerId: userId },
@@ -78,10 +76,10 @@ export class BoardService {
           },
         },
       },
-      orderBy: { createdAt: "desc" },
+      orderBy: {
+        createdAt: "desc",
+      },
     });
-
-    return boards;
   }
 
   async getBoardById(boardId: string) {
@@ -107,10 +105,14 @@ export class BoardService {
           },
         },
         columns: {
-          orderBy: { position: "asc" },
+          orderBy: {
+            position: "asc",
+          },
           include: {
             tasks: {
-              orderBy: { position: "asc" },
+              orderBy: {
+                position: "asc",
+              },
               include: {
                 assignee: {
                   select: {
@@ -138,9 +140,11 @@ export class BoardService {
       throw new AppError(400, "Board name is required");
     }
 
-    const board = await prisma.board.update({
+    return prisma.board.update({
       where: { id: boardId },
-      data: { name: name.trim() },
+      data: {
+        name: name.trim(),
+      },
       include: {
         owner: {
           select: {
@@ -151,8 +155,6 @@ export class BoardService {
         },
       },
     });
-
-    return board;
   }
 
   async deleteBoard(boardId: string) {
@@ -161,7 +163,6 @@ export class BoardService {
     });
   }
 
-  // ✅ Share Board
   async shareBoard(boardId: string, userEmail: string) {
     const user = await prisma.user.findUnique({
       where: { email: userEmail },
@@ -184,7 +185,7 @@ export class BoardService {
       throw new AppError(400, "Board already shared with this user");
     }
 
-    const member = await prisma.boardMember.create({
+    return prisma.boardMember.create({
       data: {
         boardId,
         userId: user.id,
@@ -199,13 +200,10 @@ export class BoardService {
         },
       },
     });
-
-    return member;
   }
 
-  // ✅ Get Board Members
   async getBoardMembers(boardId: string) {
-    const members = await prisma.boardMember.findMany({
+    return prisma.boardMember.findMany({
       where: { boardId },
       include: {
         user: {
@@ -217,11 +215,8 @@ export class BoardService {
         },
       },
     });
-
-    return members;
   }
 
-  // ✅ Remove Member
   async removeMember(boardId: string, userId: string) {
     const member = await prisma.boardMember.findUnique({
       where: {
