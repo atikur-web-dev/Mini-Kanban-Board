@@ -1,5 +1,3 @@
-// Backend/src/middleware/errorHandler.ts
-
 import type { ErrorRequestHandler, RequestHandler } from "express";
 import { ZodError } from "zod";
 import { Prisma } from "../../generated/prisma/client.js";

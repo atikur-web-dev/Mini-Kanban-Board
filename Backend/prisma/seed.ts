@@ -54,26 +54,27 @@ async function main() {
     },
   ];
 
-  console.log("Cleaning existing users...");
-  await prisma.user.deleteMany({});
-
-  console.log("Creating users...");
   for (const user of users) {
-    await prisma.user.create({
-      data: user,
+    await prisma.user.upsert({
+      where: {
+        email: user.email,
+      },
+      update: {
+        name: user.name,
+        passwordHash: user.passwordHash,
+      },
+      create: user,
     });
   }
 
   console.log("Seeding complete!");
-  console.log("Created " + users.length + " users");
-  console.log("\nUsers created:");
-  users.forEach((u) => console.log("   - " + u.name + " (" + u.email + ")"));
-  console.log("\nAll passwords: password123");
+  console.log(`Created or updated ${users.length} users`);
+  console.log("All passwords: password123");
 }
 
 main()
-  .catch((e) => {
-    console.error("Seeding failed:", e);
+  .catch((error) => {
+    console.error("Seeding failed:", error);
     process.exit(1);
   })
   .finally(async () => {

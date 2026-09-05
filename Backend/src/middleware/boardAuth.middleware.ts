@@ -1,7 +1,6 @@
 import type { NextFunction, Response } from "express";
 import { prisma } from "../lib/prisma.js";
 import type { AuthRequest } from "./auth.middleware.js";
-import { AppError } from "../utils/appError.js";
 
 export const checkBoardAccess = async (
   req: AuthRequest,
