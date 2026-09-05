@@ -7,7 +7,7 @@ import {
   updateColumnSchema,
 } from "../validators/column.validator.js";
 
-const router = Router();
+const router = Router({ mergeParams: true });
 const columnController = new ColumnController();
 
 router.use(authenticate);

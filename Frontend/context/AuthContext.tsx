@@ -2,9 +2,11 @@
 
 import React, {
   createContext,
+  useCallback,
+  useMemo,
   useState,
   ReactNode,
-  useCallback,
+  useSyncExternalStore,
 } from "react";
 
 import { api, authApi } from "@/lib/api";
@@ -19,49 +21,89 @@ interface AuthContextType {
   isAuthenticated: boolean;
 }
 
-export const AuthContext = createContext<AuthContextType | undefined>(
-  undefined,
-);
+export const AuthContext = createContext<
+  AuthContextType | undefined
+>(undefined);
 
-const getInitialUser = (): User | null => {
-  if (typeof window === "undefined") {
-    return null;
-  }
+const AUTH_EVENT = "auth-storage";
 
-  try {
-    const token = localStorage.getItem("token");
-
-    if (!token) {
-      return null;
-    }
-
-    const storedUser = localStorage.getItem("user");
-
-    if (!storedUser) {
-      return null;
-    }
-
-    return JSON.parse(storedUser);
-  } catch {
-    return null;
-  }
+const getUserSnapshot = (): string | null => {
+  return localStorage.getItem("user");
 };
 
-export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(getInitialUser);
+const getServerUserSnapshot = (): string | null => {
+  return null;
+};
+
+const subscribeToAuth = (callback: () => void) => {
+  window.addEventListener("storage", callback);
+  window.addEventListener(AUTH_EVENT, callback);
+
+  return () => {
+    window.removeEventListener("storage", callback);
+    window.removeEventListener(AUTH_EVENT, callback);
+  };
+};
+
+const getHydrationSnapshot = (): boolean => true;
+
+const getServerHydrationSnapshot = (): boolean => false;
+
+const subscribeToHydration = () => {
+  return () => {};
+};
+
+const notifyAuthChange = () => {
+  window.dispatchEvent(new Event(AUTH_EVENT));
+};
+
+export function AuthProvider({
+  children,
+}: {
+  children: ReactNode;
+}) {
+  const userSnapshot = useSyncExternalStore(
+    subscribeToAuth,
+    getUserSnapshot,
+    getServerUserSnapshot,
+  );
+
+  const isHydrated = useSyncExternalStore(
+    subscribeToHydration,
+    getHydrationSnapshot,
+    getServerHydrationSnapshot,
+  );
+
   const [loading, setLoading] = useState(false);
+
+  const user = useMemo<User | null>(() => {
+    if (!userSnapshot) {
+      return null;
+    }
+
+    try {
+      return JSON.parse(userSnapshot) as User;
+    } catch {
+      return null;
+    }
+  }, [userSnapshot]);
 
   const login = useCallback(
     async (email: string, password: string) => {
       setLoading(true);
 
       try {
-        const response = await authApi.login({ email, password });
+        const response = await authApi.login({
+          email,
+          password,
+        });
+
         const { user, token } = response;
 
         api.setToken(token);
-        setUser(user);
         localStorage.setItem("user", JSON.stringify(user));
+
+        notifyAuthChange();
       } finally {
         setLoading(false);
       }
@@ -70,7 +112,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   const register = useCallback(
-    async (name: string, email: string, password: string) => {
+    async (
+      name: string,
+      email: string,
+      password: string,
+    ) => {
       setLoading(true);
 
       try {
@@ -83,8 +129,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const { user, token } = response;
 
         api.setToken(token);
-        setUser(user);
         localStorage.setItem("user", JSON.stringify(user));
+
+        notifyAuthChange();
       } finally {
         setLoading(false);
       }
@@ -94,17 +141,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = useCallback(() => {
     api.setToken(null);
-    setUser(null);
+    localStorage.removeItem("token");
     localStorage.removeItem("user");
+
+    notifyAuthChange();
   }, []);
 
   const value = {
     user,
-    loading,
+    loading: loading || !isHydrated,
     login,
     register,
     logout,
-    isAuthenticated: !!user,
+    isAuthenticated: isHydrated && !!user,
   };
 
   return (

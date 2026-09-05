@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 
@@ -8,7 +9,10 @@ import {
   DndContext,
   DragEndEvent,
   DragStartEvent,
+  PointerSensor,
   closestCorners,
+  useSensor,
+  useSensors,
 } from "@dnd-kit/core";
 
 import { useAuth } from "@/hooks/useAuth";
@@ -16,8 +20,10 @@ import { useBoard } from "@/context/BoardContext";
 import { Loader } from "@/components/ui/Loader";
 import { Button } from "@/components/ui/Button";
 import { Column as ColumnComponent } from "@/components/column/Column";
+
 import { Column } from "@/types";
 import { BoardMember } from "@/lib/api/board";
+
 import toast from "react-hot-toast";
 
 const getErrorMessage = (error: unknown): string => {
@@ -32,11 +38,144 @@ const getErrorMessage = (error: unknown): string => {
   return "Something went wrong";
 };
 
+function ArrowLeftIcon() {
+  return (
+    <svg
+      width="17"
+      height="17"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M19 12H5" />
+      <path d="m12 19-7-7 7-7" />
+    </svg>
+  );
+}
+
+function UsersIcon() {
+  return (
+    <svg
+      width="17"
+      height="17"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+      <circle cx="9" cy="7" r="4" />
+      <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+      <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+    </svg>
+  );
+}
+
+function PlusIcon() {
+  return (
+    <svg
+      width="17"
+      height="17"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+    >
+      <path d="M12 5v14" />
+      <path d="M5 12h14" />
+    </svg>
+  );
+}
+
+function CloseIcon() {
+  return (
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+    >
+      <path d="m6 6 12 12" />
+      <path d="m18 6-12 12" />
+    </svg>
+  );
+}
+
+function LayoutIcon() {
+  return (
+    <svg
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <rect x="3" y="3" width="18" height="18" rx="3" />
+      <path d="M3 9h18" />
+      <path d="M9 9v12" />
+    </svg>
+  );
+}
+
+function MailIcon() {
+  return (
+    <svg
+      width="17"
+      height="17"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <rect x="3" y="5" width="18" height="14" rx="2" />
+      <path d="m3 7 9 6 9-6" />
+    </svg>
+  );
+}
+
+function UserIcon() {
+  return (
+    <svg
+      width="17"
+      height="17"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <circle cx="12" cy="8" r="4" />
+      <path d="M4 21a8 8 0 0 1 16 0" />
+    </svg>
+  );
+}
+
 export default function BoardPage() {
   const params = useParams();
   const router = useRouter();
   const boardId = params.id as string;
-
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    }),
+  );
   const { isAuthenticated } = useAuth();
 
   const {
@@ -61,7 +200,6 @@ export default function BoardPage() {
   const [showTaskModal, setShowTaskModal] = useState(false);
   const [newTaskTitle, setNewTaskTitle] = useState("");
   const [newTaskDescription, setNewTaskDescription] = useState("");
-
   const [selectedColumnId, setSelectedColumnId] = useState<string | null>(null);
 
   const [error, setError] = useState("");
@@ -126,7 +264,9 @@ export default function BoardPage() {
     toast(
       (t) => (
         <div className="flex items-center gap-3">
-          <span>Remove &ldquo;{name}&rdquo; from board?</span>
+          <span className="text-sm">
+            Remove &ldquo;{name}&rdquo; from board?
+          </span>
 
           <button
             onClick={async () => {
@@ -140,14 +280,14 @@ export default function BoardPage() {
                 toast.error(getErrorMessage(err));
               }
             }}
-            className="px-3 py-1 bg-red-500 text-white text-sm rounded hover:bg-red-600"
+            className="rounded-md bg-red-500 px-3 py-1.5 text-xs font-medium text-white transition hover:bg-red-600"
           >
             Remove
           </button>
 
           <button
             onClick={() => toast.dismiss(t.id)}
-            className="px-3 py-1 bg-gray-300 text-gray-700 text-sm rounded hover:bg-gray-400"
+            className="rounded-md bg-slate-100 px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-200"
           >
             Cancel
           </button>
@@ -348,7 +488,7 @@ export default function BoardPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="flex min-h-screen items-center justify-center bg-slate-50">
         <Loader size="lg" />
       </div>
     );
@@ -356,14 +496,17 @@ export default function BoardPage() {
 
   if (!loading && !currentBoard) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-gray-500 text-lg">Board not found</p>
+      <div className="flex min-h-screen items-center justify-center bg-slate-50">
+        <div className="rounded-2xl border border-slate-200 bg-white px-8 py-10 text-center shadow-sm">
+          <p className="text-lg font-semibold text-slate-800">
+            Board not found
+          </p>
 
           <Link
             href="/dashboard"
-            className="text-indigo-600 hover:underline mt-4 inline-block"
+            className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-blue-600 transition hover:text-blue-700"
           >
+            <ArrowLeftIcon />
             Go back to dashboard
           </Link>
         </div>
@@ -377,53 +520,98 @@ export default function BoardPage() {
   }));
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white shadow">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
-          <div className="flex items-center gap-4">
+    <div className="min-h-screen bg-slate-50">
+      <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/95 shadow-sm backdrop-blur">
+        <div className="mx-auto flex min-h-[72px] max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
+          <div className="flex min-w-0 items-center gap-3">
             <Link
               href="/dashboard"
-              className="text-gray-500 hover:text-gray-700"
+              className="flex h-9 shrink-0 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 text-sm font-medium text-slate-600 transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-600"
             >
-              ← Back
+              <ArrowLeftIcon />
+              <span className="hidden sm:inline">Dashboard</span>
             </Link>
 
-            <h1 className="text-2xl font-bold text-gray-900">
-              {currentBoard!.name}
-            </h1>
+            <div className="h-7 w-px bg-slate-200" />
+
+            <div className="flex min-w-0 items-center gap-2.5">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-600 text-white shadow-sm">
+                <LayoutIcon />
+              </div>
+
+              <div className="min-w-0">
+                <p className="hidden text-[10px] font-semibold uppercase tracking-[0.14em] text-blue-600 sm:block">
+                  Board
+                </p>
+
+                <h1 className="truncate text-base font-bold text-slate-900 sm:text-lg">
+                  {currentBoard!.name}
+                </h1>
+              </div>
+            </div>
           </div>
 
-          <div className="flex items-center gap-2">
-            <Button
+          <div className="flex shrink-0 items-center gap-2">
+            <button
+              type="button"
               onClick={() => {
                 setShowMembersModal(true);
                 fetchMembers();
               }}
-              size="sm"
-              variant="outline"
+              className="flex h-9 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-600 transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-600"
             >
-              Members
-            </Button>
+              <UsersIcon />
+              <span className="hidden sm:inline">Members</span>
+            </button>
 
-            <Button onClick={() => setShowColumnModal(true)} size="sm">
-              Add Column
-            </Button>
+            <button
+              type="button"
+              onClick={() => {
+                setError("");
+                setShowColumnModal(true);
+              }}
+              className="flex h-9 items-center gap-2 rounded-lg bg-blue-600 px-3.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-200"
+            >
+              <PlusIcon />
+              <span className="hidden sm:inline">Add Column</span>
+            </button>
           </div>
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="mx-auto max-w-7xl px-4 py-7 sm:px-6 lg:px-8">
         <DndContext
+          sensors={sensors}
           collisionDetection={closestCorners}
           onDragStart={handleDragStart}
           onDragEnd={handleDragEnd}
         >
-          <div className="flex gap-6 overflow-x-auto pb-4">
+          <div className="flex gap-6 overflow-x-auto pb-5">
             {currentBoard!.columns?.length === 0 ? (
-              <div className="w-full text-center py-12 bg-white rounded-lg shadow">
-                <p className="text-gray-500">
-                  No columns yet. Add your first column!
+              <div className="w-full rounded-2xl border border-dashed border-slate-300 bg-white py-16 text-center shadow-sm">
+                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+                  <LayoutIcon />
+                </div>
+
+                <p className="mt-4 text-sm font-semibold text-slate-800">
+                  No columns yet
                 </p>
+
+                <p className="mt-1 text-xs text-slate-500">
+                  Add your first column to start organizing tasks.
+                </p>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setError("");
+                    setShowColumnModal(true);
+                  }}
+                  className="mt-5 inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700"
+                >
+                  <PlusIcon />
+                  Add Column
+                </button>
               </div>
             ) : (
               currentBoard!.columns?.map((column: Column) => (
@@ -435,6 +623,7 @@ export default function BoardPage() {
                   onUpdateColumn={handleUpdateColumn}
                   onAddTask={(colId) => {
                     setSelectedColumnId(colId);
+                    setError("");
                     setShowTaskModal(true);
                   }}
                   onDeleteTask={handleDeleteTask}
@@ -446,31 +635,76 @@ export default function BoardPage() {
           </div>
         </DndContext>
 
-        {/* Create Column Modal */}
         {showColumnModal && (
-          <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-lg max-w-md w-full p-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">
-                Create New Column
-              </h3>
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 px-4 backdrop-blur-[2px]"
+            onMouseDown={(e) => {
+              if (e.target === e.currentTarget) {
+                setShowColumnModal(false);
+                setNewColumnName("");
+                setError("");
+              }
+            }}
+          >
+            <div className="w-full max-w-md overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl">
+              <div className="flex items-start justify-between border-b border-slate-100 px-6 py-5">
+                <div>
+                  <div className="mb-2 flex h-9 w-9 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
+                    <LayoutIcon />
+                  </div>
+
+                  <h3 className="text-lg font-bold text-slate-900">
+                    Create new column
+                  </h3>
+
+                  <p className="mt-1 text-sm text-slate-500">
+                    Add a new stage to your workflow.
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowColumnModal(false);
+                    setNewColumnName("");
+                    setError("");
+                  }}
+                  className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+                  aria-label="Close"
+                >
+                  <CloseIcon />
+                </button>
+              </div>
 
               <form onSubmit={handleCreateColumn}>
-                {error && (
-                  <div className="mb-4 rounded-md bg-red-50 p-3">
-                    <p className="text-sm text-red-700">{error}</p>
-                  </div>
-                )}
+                <div className="px-6 py-5">
+                  {error && (
+                    <div className="mb-4 rounded-lg border border-red-100 bg-red-50 px-3.5 py-3">
+                      <p className="text-sm font-medium text-red-700">
+                        {error}
+                      </p>
+                    </div>
+                  )}
 
-                <input
-                  type="text"
-                  value={newColumnName}
-                  onChange={(e) => setNewColumnName(e.target.value)}
-                  placeholder="Column name"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  autoFocus
-                />
+                  <label
+                    htmlFor="column-name"
+                    className="mb-2 block text-sm font-semibold text-slate-800"
+                  >
+                    Column name
+                  </label>
 
-                <div className="mt-4 flex justify-end gap-3">
+                  <input
+                    id="column-name"
+                    type="text"
+                    value={newColumnName}
+                    onChange={(e) => setNewColumnName(e.target.value)}
+                    placeholder="e.g. In Progress"
+                    className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-medium text-slate-900 shadow-sm outline-none transition placeholder:text-slate-400 hover:border-slate-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-50"
+                    autoFocus
+                  />
+                </div>
+
+                <div className="flex justify-end gap-2 border-t border-slate-100 bg-slate-50/70 px-6 py-4">
                   <button
                     type="button"
                     onClick={() => {
@@ -478,16 +712,16 @@ export default function BoardPage() {
                       setNewColumnName("");
                       setError("");
                     }}
-                    className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-500"
+                    className="rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-50 hover:text-slate-800"
                   >
                     Cancel
                   </button>
 
                   <button
                     type="submit"
-                    className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-md"
+                    className="rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-100"
                   >
-                    Create
+                    Create column
                   </button>
                 </div>
               </form>
@@ -495,39 +729,103 @@ export default function BoardPage() {
           </div>
         )}
 
-        {/* Create Task Modal */}
         {showTaskModal && (
-          <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-lg max-w-md w-full p-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">
-                Create New Task
-              </h3>
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 px-4 backdrop-blur-[2px]"
+            onMouseDown={(e) => {
+              if (e.target === e.currentTarget) {
+                setShowTaskModal(false);
+                setNewTaskTitle("");
+                setNewTaskDescription("");
+                setSelectedColumnId(null);
+                setError("");
+              }
+            }}
+          >
+            <div className="w-full max-w-lg overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl">
+              <div className="flex items-start justify-between border-b border-slate-100 px-6 py-5">
+                <div>
+                  <div className="mb-2 flex h-9 w-9 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
+                    <PlusIcon />
+                  </div>
+
+                  <h3 className="text-lg font-bold text-slate-900">
+                    Create new task
+                  </h3>
+
+                  <p className="mt-1 text-sm text-slate-500">
+                    Add a task to your board.
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowTaskModal(false);
+                    setNewTaskTitle("");
+                    setNewTaskDescription("");
+                    setSelectedColumnId(null);
+                    setError("");
+                  }}
+                  className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+                  aria-label="Close"
+                >
+                  <CloseIcon />
+                </button>
+              </div>
 
               <form onSubmit={handleCreateTask}>
-                {error && (
-                  <div className="mb-4 rounded-md bg-red-50 p-3">
-                    <p className="text-sm text-red-700">{error}</p>
+                <div className="space-y-5 px-6 py-5">
+                  {error && (
+                    <div className="rounded-lg border border-red-100 bg-red-50 px-3.5 py-3">
+                      <p className="text-sm font-medium text-red-700">
+                        {error}
+                      </p>
+                    </div>
+                  )}
+
+                  <div>
+                    <label
+                      htmlFor="task-title"
+                      className="mb-2 block text-sm font-semibold text-slate-800"
+                    >
+                      Task title
+                    </label>
+
+                    <input
+                      id="task-title"
+                      type="text"
+                      value={newTaskTitle}
+                      onChange={(e) => setNewTaskTitle(e.target.value)}
+                      placeholder="What needs to be done?"
+                      className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-medium text-slate-900 shadow-sm outline-none transition placeholder:text-slate-400 hover:border-slate-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-50"
+                      autoFocus
+                    />
                   </div>
-                )}
 
-                <input
-                  type="text"
-                  value={newTaskTitle}
-                  onChange={(e) => setNewTaskTitle(e.target.value)}
-                  placeholder="Task title"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 mb-3"
-                  autoFocus
-                />
+                  <div>
+                    <label
+                      htmlFor="task-description"
+                      className="mb-2 block text-sm font-semibold text-slate-800"
+                    >
+                      Description
+                      <span className="ml-1 font-normal text-slate-400">
+                        (optional)
+                      </span>
+                    </label>
 
-                <textarea
-                  value={newTaskDescription}
-                  onChange={(e) => setNewTaskDescription(e.target.value)}
-                  placeholder="Description (optional)"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  rows={3}
-                />
+                    <textarea
+                      id="task-description"
+                      value={newTaskDescription}
+                      onChange={(e) => setNewTaskDescription(e.target.value)}
+                      placeholder="Add some context about this task..."
+                      rows={4}
+                      className="w-full resize-none rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-medium leading-6 text-slate-900 shadow-sm outline-none transition placeholder:text-slate-400 hover:border-slate-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-50"
+                    />
+                  </div>
+                </div>
 
-                <div className="mt-4 flex justify-end gap-3">
+                <div className="flex justify-end gap-2 border-t border-slate-100 bg-slate-50/70 px-6 py-4">
                   <button
                     type="button"
                     onClick={() => {
@@ -537,16 +835,17 @@ export default function BoardPage() {
                       setSelectedColumnId(null);
                       setError("");
                     }}
-                    className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-500"
+                    className="rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-50 hover:text-slate-800"
                   >
                     Cancel
                   </button>
 
                   <button
                     type="submit"
-                    className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-md"
+                    className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-100"
                   >
-                    Create
+                    <PlusIcon />
+                    Create task
                   </button>
                 </div>
               </form>
@@ -554,96 +853,163 @@ export default function BoardPage() {
           </div>
         )}
 
-        {/* Members Modal */}
         {showMembersModal && (
-          <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-lg max-w-md w-full p-6">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-medium text-gray-900">
-                  Board Members
-                </h3>
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 px-4 backdrop-blur-[2px]"
+            onMouseDown={(e) => {
+              if (e.target === e.currentTarget) {
+                setShowMembersModal(false);
+              }
+            }}
+          >
+            <div className="w-full max-w-lg overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl">
+              <div className="flex items-start justify-between border-b border-slate-100 px-6 py-5">
+                <div>
+                  <div className="mb-2 flex h-9 w-9 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
+                    <UsersIcon />
+                  </div>
+
+                  <h3 className="text-lg font-bold text-slate-900">
+                    Board members
+                  </h3>
+
+                  <p className="mt-1 text-sm text-slate-500">
+                    Manage who can access this board.
+                  </p>
+                </div>
 
                 <button
+                  type="button"
                   onClick={() => setShowMembersModal(false)}
-                  className="text-gray-400 hover:text-gray-600"
+                  className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+                  aria-label="Close"
                 >
-                  ×
+                  <CloseIcon />
                 </button>
               </div>
 
-              <form onSubmit={handleShareBoard} className="mb-4">
-                <div className="flex gap-2">
-                  <input
-                    type="email"
-                    value={shareEmail}
-                    onChange={(e) => setShareEmail(e.target.value)}
-                    placeholder="Enter email to share"
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  />
-
-                  <button
-                    type="submit"
-                    className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
+              <div className="px-6 py-5">
+                <form onSubmit={handleShareBoard} className="mb-5">
+                  <label
+                    htmlFor="share-email"
+                    className="mb-2 block text-sm font-semibold text-slate-800"
                   >
-                    Share
-                  </button>
-                </div>
+                    Invite member
+                  </label>
 
-                {shareError && (
-                  <p className="text-sm text-red-600 mt-1">{shareError}</p>
-                )}
-              </form>
+                  <div className="flex gap-2">
+                    <div className="relative flex-1">
+                      <MailIcon />
 
-              <div className="space-y-2 max-h-60 overflow-y-auto">
-                <div className="flex justify-between items-center p-2 bg-gray-50 rounded">
-                  <div>
-                    <p className="font-medium text-gray-900">
-                      {currentBoard!.owner.name}
-                    </p>
+                      <input
+                        id="share-email"
+                        type="email"
+                        value={shareEmail}
+                        onChange={(e) => setShareEmail(e.target.value)}
+                        placeholder="Enter member email"
+                        className="w-full rounded-xl border border-slate-300 bg-white py-3 pl-10 pr-4 text-sm font-medium text-slate-900 shadow-sm outline-none transition placeholder:text-slate-400 hover:border-slate-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-50"
+                      />
 
-                    <p className="text-sm text-gray-500">
-                      {currentBoard!.owner.email}
-                    </p>
+                      <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
+                        <MailIcon />
+                      </span>
+                    </div>
+
+                    <button
+                      type="submit"
+                      className="rounded-xl bg-blue-600 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700"
+                    >
+                      Share
+                    </button>
                   </div>
 
-                  <span className="text-xs bg-indigo-100 text-indigo-700 px-2 py-1 rounded">
-                    Owner
+                  {shareError && (
+                    <p className="mt-2 text-xs font-medium text-red-600">
+                      {shareError}
+                    </p>
+                  )}
+                </form>
+
+                <div className="mb-3 flex items-center justify-between">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+                    People with access
+                  </p>
+
+                  <span className="rounded-full bg-blue-50 px-2.5 py-1 text-[11px] font-semibold text-blue-600">
+                    {boardMembers.length + 1}
                   </span>
                 </div>
 
-                {boardMembers.map((member) => (
-                  <div
-                    key={member.id}
-                    className="flex justify-between items-center p-2 bg-gray-50 rounded"
-                  >
-                    <div>
-                      <p className="font-medium text-gray-900">
-                        {member.user.name}
-                      </p>
+                <div className="max-h-64 space-y-2 overflow-y-auto pr-1">
+                  <div className="flex items-center justify-between rounded-xl border border-blue-100 bg-blue-50/60 p-3">
+                    <div className="flex min-w-0 items-center gap-3">
+                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-600 text-white">
+                        <UserIcon />
+                      </div>
 
-                      <p className="text-sm text-gray-500">
-                        {member.user.email}
-                      </p>
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-semibold text-slate-900">
+                          {currentBoard!.owner.name}
+                        </p>
+
+                        <p className="truncate text-xs text-slate-500">
+                          {currentBoard!.owner.email}
+                        </p>
+                      </div>
                     </div>
 
-                    {member.user.id !== currentBoard!.ownerId && (
-                      <button
-                        onClick={() =>
-                          handleRemoveMember(member.user.id, member.user.name)
-                        }
-                        className="text-red-500 hover:text-red-700 text-sm"
-                      >
-                        Remove
-                      </button>
-                    )}
+                    <span className="ml-3 rounded-full bg-blue-100 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-blue-700">
+                      Owner
+                    </span>
                   </div>
-                ))}
 
-                {boardMembers.length === 0 && (
-                  <p className="text-gray-500 text-sm text-center py-4">
-                    No members yet
-                  </p>
-                )}
+                  {boardMembers.map((member) => (
+                    <div
+                      key={member.id}
+                      className="flex items-center justify-between rounded-xl border border-slate-100 bg-white p-3 transition hover:border-slate-200 hover:bg-slate-50"
+                    >
+                      <div className="flex min-w-0 items-center gap-3">
+                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-500">
+                          <UserIcon />
+                        </div>
+
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-semibold text-slate-800">
+                            {member.user.name}
+                          </p>
+
+                          <p className="truncate text-xs text-slate-500">
+                            {member.user.email}
+                          </p>
+                        </div>
+                      </div>
+
+                      {member.user.id !== currentBoard!.ownerId && (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            handleRemoveMember(member.user.id, member.user.name)
+                          }
+                          className="ml-3 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-red-500 transition hover:bg-red-50 hover:text-red-600"
+                        >
+                          Remove
+                        </button>
+                      )}
+                    </div>
+                  ))}
+
+                  {boardMembers.length === 0 && (
+                    <div className="rounded-xl border border-dashed border-slate-200 py-7 text-center">
+                      <p className="text-sm font-medium text-slate-500">
+                        No additional members yet
+                      </p>
+
+                      <p className="mt-1 text-xs text-slate-400">
+                        Invite someone using their email address.
+                      </p>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </div>
