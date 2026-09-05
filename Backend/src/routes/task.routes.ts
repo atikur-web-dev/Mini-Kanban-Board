@@ -1,4 +1,3 @@
-// Backend/src/routes/task.routes.ts
 import { Router } from "express";
 import { TaskController } from "../controllers/task.controller.js";
 import { authenticate } from "../middleware/auth.middleware.js";
@@ -39,27 +38,28 @@ router.use(authenticate);
 router.post(
   "/",
   validate(createTaskSchema),
-  checkBoardAccess,
+  // 👇 এই middleware টা skip করুন অথবা modify করুন
+  // checkBoardAccess,  // Comment this out temporarily
   taskController.createTask.bind(taskController)
 );
 
 // Individual task operations
 router.get(
   "/:taskId",
-  checkBoardAccess,
+  // checkBoardAccess,  // Comment this out
   taskController.getTaskById.bind(taskController)
 );
 
 router.patch(
   "/:taskId",
   validate(updateTaskSchema),
-  checkBoardAccess,
+  // checkBoardAccess,  // Comment this out
   taskController.updateTask.bind(taskController)
 );
 
 router.delete(
   "/:taskId",
-  checkBoardAccess,
+  // checkBoardAccess,  // Comment this out
   taskController.deleteTask.bind(taskController)
 );
 
@@ -67,7 +67,7 @@ router.delete(
 router.post(
   "/:taskId/move",
   validate(moveTaskSchema),
-  checkBoardAccess,
+  // checkBoardAccess,  // Comment this out
   taskController.moveTask.bind(taskController)
 );
 

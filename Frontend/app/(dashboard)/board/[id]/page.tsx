@@ -44,6 +44,11 @@ export default function BoardPage() {
     }
   }, [isAuthenticated, router, boardId, fetchBoard]);
 
+    // Debug: Log currentBoard changes
+  useEffect(() => {
+    console.log("Current Board:", currentBoard); 
+  }, [currentBoard]);
+
   const handleCreateColumn = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newColumnName.trim()) {

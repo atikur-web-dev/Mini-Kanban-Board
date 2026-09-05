@@ -1,7 +1,7 @@
 import type { Request, Response, NextFunction } from "express";
 import { BoardService } from "../services/board.service.js";
 import type { AuthRequest } from "../middleware/auth.middleware.js";
-
+import { prisma } from "../lib/prisma.js";
 const boardService = new BoardService();
 
 export class BoardController {
@@ -30,15 +30,71 @@ export class BoardController {
   async getBoardById(req: AuthRequest, res: Response, next: NextFunction) {
     try {
       const { boardId } = req.params;
-      
-      // Type check
-      if (!boardId || typeof boardId !== 'string') {
+
+      const boardIdStr = Array.isArray(boardId) ? boardId[0] : boardId;
+
+      if (!boardIdStr) {
         return res.status(400).json({ error: "Invalid board ID" });
       }
-      
-      const board = await boardService.getBoardById(boardId);
+
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(401).json({ error: "Authentication required" });
+      }
+
+      const board = await prisma.board.findFirst({
+        where: {
+          id: boardIdStr,
+          OR: [{ ownerId: userId }, { members: { some: { userId } } }],
+        },
+        include: {
+          owner: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+            },
+          },
+          members: {
+            include: {
+              user: {
+                select: {
+                  id: true,
+                  name: true,
+                  email: true,
+                },
+              },
+            },
+          },
+          columns: {
+            orderBy: { position: "asc" },
+            include: {
+              tasks: {
+                orderBy: { position: "asc" },
+                include: {
+                  assignee: {
+                    select: {
+                      id: true,
+                      name: true,
+                      email: true,
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      });
+
+      if (!board) {
+        return res
+          .status(404)
+          .json({ error: "Board not found or you don't have access" });
+      }
+
       res.status(200).json(board);
     } catch (error) {
+      console.error("Error fetching board:", error);
       next(error);
     }
   }
@@ -49,7 +105,7 @@ export class BoardController {
       const { name } = req.body;
 
       // Type check
-      if (!boardId || typeof boardId !== 'string') {
+      if (!boardId || typeof boardId !== "string") {
         return res.status(400).json({ error: "Invalid board ID" });
       }
 
@@ -65,7 +121,7 @@ export class BoardController {
       const { boardId } = req.params;
 
       // Type check
-      if (!boardId || typeof boardId !== 'string') {
+      if (!boardId || typeof boardId !== "string") {
         return res.status(400).json({ error: "Invalid board ID" });
       }
 
@@ -82,7 +138,7 @@ export class BoardController {
       const { email } = req.body;
 
       // Type check
-      if (!boardId || typeof boardId !== 'string') {
+      if (!boardId || typeof boardId !== "string") {
         return res.status(400).json({ error: "Invalid board ID" });
       }
 
@@ -97,11 +153,11 @@ export class BoardController {
     try {
       const { boardId, userId } = req.params;
 
-      if (!boardId || typeof boardId !== 'string') {
+      if (!boardId || typeof boardId !== "string") {
         return res.status(400).json({ error: "Invalid board ID" });
       }
 
-      if (!userId || typeof userId !== 'string') {
+      if (!userId || typeof userId !== "string") {
         return res.status(400).json({ error: "Invalid user ID" });
       }
 

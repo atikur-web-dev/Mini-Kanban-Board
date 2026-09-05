@@ -48,8 +48,10 @@ export function BoardProvider({ children }: { children: ReactNode }) {
     setError(null);
     try {
       const data = await boardApi.getAll();
+      console.log("Board data received:", data);
       setBoards(data);
     } catch (err: unknown) {
+      console.error("Error fetching board:", err);
       setError(getErrorMessage(err));
       throw err;
     } finally {

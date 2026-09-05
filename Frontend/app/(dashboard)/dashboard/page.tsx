@@ -121,7 +121,7 @@ export default function DashboardPage() {
                   </Link>
                   <button
                     onClick={() => handleDeleteBoard(board.id, board.name)}
-                    className="text-red-500 hover:text-red-700 text-sm ml-4 flex-shrink-0"
+                    className="text-red-500 hover:text-red-700 text-sm ml-4 shrink-0"
                   >
                     Delete
                   </button>
