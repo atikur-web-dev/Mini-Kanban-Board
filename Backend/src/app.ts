@@ -6,6 +6,7 @@ import helmet from "helmet";
 import { env } from "./config/env.js";
 import { prisma } from "./lib/prisma.js";
 import { errorHandler, notFoundHandler } from "./middleware/errorHandler.js";
+import authRoutes from "./routes/auth.routes.js";  
 
 export const app = express();
 
@@ -14,6 +15,7 @@ app.use(cors({ origin: env.CORS_ORIGIN }));
 app.use(compression());
 app.use(express.json({ limit: "32kb" }));
 
+// Health check
 app.get("/health", async (_req, res, next) => {
   try {
     await prisma.$queryRaw`SELECT 1`;
@@ -22,6 +24,9 @@ app.get("/health", async (_req, res, next) => {
     next(error);
   }
 });
+
+// Routes
+app.use("/api/auth", authRoutes);  
 
 app.use(notFoundHandler);
 app.use(errorHandler);
