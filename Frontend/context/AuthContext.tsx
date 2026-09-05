@@ -15,7 +15,7 @@ interface AuthContextType {
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Helper to get initial user from localStorage (runs only on client)
+// Helper to get initial user from localStorage
 const getInitialUser = (): User | null => {
   if (typeof window === "undefined") return null;
   
@@ -33,7 +33,6 @@ const getInitialUser = (): User | null => {
 };
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  // Initialize state directly from localStorage
   const [user, setUser] = useState<User | null>(getInitialUser);
   const [loading, setLoading] = useState(false);
 
@@ -42,10 +41,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const response = await authApi.login({ email, password });
       const { user, token } = response;
+      
+      console.log("Login response:", { user, token }); // Debug log
+      
+      // Set token in API client
       api.setToken(token);
+      
+      // Set user state
       setUser(user);
+      
+      // Store in localStorage
       localStorage.setItem("token", token);
       localStorage.setItem("user", JSON.stringify(user));
+      
+      console.log("Token stored:", localStorage.getItem("token")); // Debug log
     } finally {
       setLoading(false);
     }
@@ -56,6 +65,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const response = await authApi.register({ name, email, password });
       const { user, token } = response;
+      
       api.setToken(token);
       setUser(user);
       localStorage.setItem("token", token);

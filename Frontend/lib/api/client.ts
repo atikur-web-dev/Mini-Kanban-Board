@@ -1,23 +1,10 @@
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
 
-// Type guard for error response
-interface ErrorResponse {
-  error?: string;
-  message?: string;
-}
-
-const isErrorResponse = (data: unknown): data is ErrorResponse => {
-  return (
-    typeof data === "object" &&
-    data !== null &&
-    ("error" in data || "message" in data)
-  );
-};
-
 export class ApiClient {
   private token: string | null = null;
 
   setToken(token: string | null) {
+    console.log("Setting token:", token ? "Token present" : "Token null"); // Debug
     this.token = token;
     if (token) {
       localStorage.setItem("token", token);
@@ -29,16 +16,17 @@ export class ApiClient {
   getToken(): string | null {
     if (!this.token) {
       this.token = localStorage.getItem("token");
+      console.log("Getting token from localStorage:", this.token ? "Present" : "Null"); // Debug
     }
     return this.token;
   }
 
-  private async request<T>(
-    endpoint: string,
-    options: RequestInit = {}
-  ): Promise<T> {
+  private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
     const url = `${API_URL}${endpoint}`;
     const token = this.getToken();
+    
+    console.log("Request to:", url);
+    console.log("Token:", token ? "Present" : "Null");
 
     const headers: HeadersInit = {
       "Content-Type": "application/json",
@@ -46,24 +34,41 @@ export class ApiClient {
     };
 
     if (token) {
-      // Fix: Use type assertion for headers
       (headers as Record<string, string>)["Authorization"] = `Bearer ${token}`;
     }
 
-    const response = await fetch(url, { ...options, headers });
-    const data: unknown = await response.json();
-
-    if (!response.ok) {
-      let errorMessage = "Something went wrong";
+    try {
+      const response = await fetch(url, { ...options, headers });
       
-      if (isErrorResponse(data)) {
-        errorMessage = data.error || data.message || errorMessage;
+      // If 401, clear token and redirect to login
+      if (response.status === 401) {
+        console.error("401 Unauthorized - Clearing token");
+        this.setToken(null);
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        window.location.href = "/login";
+        throw new Error("Session expired. Please login again.");
       }
-      
-      throw new Error(errorMessage);
-    }
 
-    return data as T;
+      const data: unknown = await response.json();
+
+      if (!response.ok) {
+        let errorMessage = "Something went wrong";
+        if (data && typeof data === "object" && "error" in data) {
+          errorMessage = String(data.error);
+        } else if (data && typeof data === "object" && "message" in data) {
+          errorMessage = String(data.message);
+        }
+        throw new Error(errorMessage);
+      }
+
+      return data as T;
+    } catch (error) {
+      if (error instanceof Error) {
+        throw error;
+      }
+      throw new Error("Network error - Please check if backend is running");
+    }
   }
 
   get<T>(endpoint: string): Promise<T> {

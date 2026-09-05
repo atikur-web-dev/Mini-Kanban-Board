@@ -24,6 +24,9 @@ export default function DashboardPage() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newBoardName, setNewBoardName] = useState("");
   const [error, setError] = useState("");
+  
+  // ✅ Use typeof window check directly - no state
+  const isClient = typeof window !== "undefined";
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -59,8 +62,8 @@ export default function DashboardPage() {
     }
   };
 
-  // ✅ Use typeof window !== "undefined" check instead of state
-  if (typeof window === "undefined") {
+  // ✅ Show loader on server side
+  if (!isClient) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Loader size="lg" />
@@ -186,4 +189,4 @@ export default function DashboardPage() {
       </main>
     </div>
   );
-}
+} 

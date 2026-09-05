@@ -1,4 +1,3 @@
-// Backend/src/routes/board.routes.ts
 import { Router } from "express";
 import { BoardController } from "../controllers/board.controller.js";
 import { authenticate } from "../middleware/auth.middleware.js";
@@ -33,12 +32,37 @@ router.use(authenticate);
 
 // Board CRUD
 router.get("/", boardController.getBoards.bind(boardController));
+
 router.post(
   "/",
   validate(createBoardSchema),
   boardController.createBoard.bind(boardController)
 );
 
+// 👇 IMPORTANT: Specific routes MUST come before dynamic routes
+// Get board members
+router.get(
+  "/:boardId/members",
+  checkBoardAccess,
+  boardController.getBoardMembers.bind(boardController)
+);
+
+// Share board
+router.post(
+  "/:boardId/share",
+  validate(shareBoardSchema),
+  checkBoardOwnership,
+  boardController.shareBoard.bind(boardController)
+);
+
+// Remove member
+router.delete(
+  "/:boardId/members/:userId",
+  checkBoardOwnership,
+  boardController.removeMember.bind(boardController)
+);
+
+// Board CRUD with ID (dynamic routes - MUST come last)
 router.get(
   "/:boardId",
   checkBoardAccess,
@@ -56,20 +80,6 @@ router.delete(
   "/:boardId",
   checkBoardOwnership,
   boardController.deleteBoard.bind(boardController)
-);
-
-// Board sharing
-router.post(
-  "/:boardId/share",
-  validate(shareBoardSchema),
-  checkBoardOwnership,
-  boardController.shareBoard.bind(boardController)
-);
-
-router.delete(
-  "/:boardId/members/:userId",
-  checkBoardOwnership,
-  boardController.removeMember.bind(boardController)
 );
 
 export default router;

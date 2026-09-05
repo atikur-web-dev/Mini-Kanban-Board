@@ -15,6 +15,7 @@ import { Loader } from "@/components/ui/Loader";
 import { Button } from "@/components/ui/Button";
 import { Column as ColumnComponent } from "@/components/column/Column";
 import { Column } from "@/types";
+import { BoardMember } from "@/lib/api/board";
 
 const getErrorMessage = (error: unknown): string => {
   if (error instanceof Error) return error.message;
@@ -39,6 +40,9 @@ export default function BoardPage() {
     createTask,
     deleteTask,
     moveTask,
+    shareBoard,
+    removeMember,
+    getBoardMembers,
   } = useBoard();
 
   const [showColumnModal, setShowColumnModal] = useState(false);
@@ -50,7 +54,13 @@ export default function BoardPage() {
   const [error, setError] = useState("");
   const [activeId, setActiveId] = useState<string | null>(null);
   
-  // ✅ Use typeof window check directly - no state needed
+  // Members Modal states
+  const [showMembersModal, setShowMembersModal] = useState(false);
+  const [boardMembers, setBoardMembers] = useState<BoardMember[]>([]);
+  const [shareEmail, setShareEmail] = useState("");
+  const [shareError, setShareError] = useState("");
+
+  // ✅ Fix: Use typeof window check instead of state
   const isClient = typeof window !== "undefined";
 
   useEffect(() => {
@@ -62,6 +72,42 @@ export default function BoardPage() {
       fetchBoard(boardId);
     }
   }, [isAuthenticated, router, boardId, fetchBoard]);
+
+  const fetchMembers = async () => {
+    try {
+      const members = await getBoardMembers(boardId);
+      setBoardMembers(members);
+    } catch (err) {
+      console.error("Failed to fetch members:", err);
+    }
+  };
+
+  const handleShareBoard = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!shareEmail.trim()) {
+      setShareError("Email is required");
+      return;
+    }
+
+    try {
+      await shareBoard(boardId, shareEmail.trim());
+      setShareEmail("");
+      setShareError("");
+      await fetchMembers();
+    } catch (err: unknown) {
+      setShareError(getErrorMessage(err));
+    }
+  };
+
+  const handleRemoveMember = async (userId: string, name: string) => {
+    if (!confirm(`Are you sure you want to remove "${name}" from this board?`)) return;
+    try {
+      await removeMember(boardId, userId);
+      await fetchMembers();
+    } catch (err: unknown) {
+      alert("Failed to remove member: " + getErrorMessage(err));
+    }
+  };
 
   const handleCreateColumn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -200,7 +246,7 @@ export default function BoardPage() {
     }
   };
 
-  // ✅ Show loader on server-side to prevent hydration mismatch
+  // ✅ Fix: Show loader on server-side
   if (!isClient) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -209,6 +255,7 @@ export default function BoardPage() {
     );
   }
 
+  // ✅ Show loader while loading
   if (loading && !currentBoard) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -217,7 +264,8 @@ export default function BoardPage() {
     );
   }
 
-  if (!currentBoard) {
+  // ✅ Show "Board not found" only after loading is complete
+  if (!currentBoard && !loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -233,7 +281,8 @@ export default function BoardPage() {
     );
   }
 
-  const allColumns = currentBoard.columns.map((col) => ({
+  // ✅ Fix: currentBoard is not null here, so safe to use
+  const allColumns = currentBoard!.columns.map((col) => ({
     id: col.id,
     name: col.name,
   }));
@@ -248,12 +297,24 @@ export default function BoardPage() {
               ← Back
             </Link>
             <h1 className="text-2xl font-bold text-gray-900">
-              {currentBoard.name}
+              {currentBoard!.name}
             </h1>
           </div>
-          <Button onClick={() => setShowColumnModal(true)} size="sm">
-            + Add Column
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              onClick={() => {
+                setShowMembersModal(true);
+                fetchMembers();
+              }}
+              size="sm"
+              variant="outline"
+            >
+              👥 Members
+            </Button>
+            <Button onClick={() => setShowColumnModal(true)} size="sm">
+              + Add Column
+            </Button>
+          </div>
         </div>
       </header>
 
@@ -265,12 +326,12 @@ export default function BoardPage() {
           onDragEnd={handleDragEnd}
         >
           <div className="flex gap-6 overflow-x-auto pb-4">
-            {currentBoard.columns?.length === 0 ? (
+            {currentBoard!.columns?.length === 0 ? (
               <div className="w-full text-center py-12 bg-white rounded-lg shadow">
                 <p className="text-gray-500">No columns yet. Add your first column!</p>
               </div>
             ) : (
-              currentBoard.columns?.map((column: Column) => (
+              currentBoard!.columns?.map((column: Column) => (
                 <ColumnComponent
                   key={column.id}
                   column={column}
@@ -383,6 +444,79 @@ export default function BoardPage() {
                   </button>
                 </div>
               </form>
+            </div>
+          </div>
+        )}
+
+        {/* Members Modal */}
+        {showMembersModal && (
+          <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-lg max-w-md w-full p-6">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-medium text-gray-900">Board Members</h3>
+                <button
+                  onClick={() => setShowMembersModal(false)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  ×
+                </button>
+              </div>
+
+              {/* Share Board Form */}
+              <form onSubmit={handleShareBoard} className="mb-4">
+                <div className="flex gap-2">
+                  <input
+                    type="email"
+                    value={shareEmail}
+                    onChange={(e) => setShareEmail(e.target.value)}
+                    placeholder="Enter email to share"
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  />
+                  <button
+                    type="submit"
+                    className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
+                  >
+                    Share
+                  </button>
+                </div>
+                {shareError && (
+                  <p className="text-sm text-red-600 mt-1">{shareError}</p>
+                )}
+              </form>
+
+              {/* Members List */}
+              <div className="space-y-2 max-h-60 overflow-y-auto">
+                {/* Owner */}
+                <div className="flex justify-between items-center p-2 bg-gray-50 rounded">
+                  <div>
+                    <p className="font-medium text-gray-900">{currentBoard!.owner.name}</p>
+                    <p className="text-sm text-gray-500">{currentBoard!.owner.email}</p>
+                  </div>
+                  <span className="text-xs bg-indigo-100 text-indigo-700 px-2 py-1 rounded">Owner</span>
+                </div>
+
+                {/* Members */}
+                {boardMembers.map((member) => (
+                  <div key={member.id} className="flex justify-between items-center p-2 bg-gray-50 rounded">
+                    <div>
+                      <p className="font-medium text-gray-900">{member.user.name}</p>
+                      <p className="text-sm text-gray-500">{member.user.email}</p>
+                    </div>
+                    {member.user.id !== currentBoard!.ownerId && (
+                      <button
+                        onClick={() => handleRemoveMember(member.user.id, member.user.name)}
+                        className="text-red-500 hover:text-red-700 text-sm"
+                      >
+                        Remove
+                      </button>
+                    )}
+                  </div>
+                ))}
+
+                {boardMembers.length === 0 && (
+                  <p className="text-gray-500 text-sm text-center py-4">No members yet</p>
+                )}
+              </div>
             </div>
           </div>
         )}

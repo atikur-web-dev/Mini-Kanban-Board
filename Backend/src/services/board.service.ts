@@ -1,4 +1,3 @@
-// Backend/src/services/board.service.ts
 import { prisma } from "../lib/prisma.js";
 import { AppError } from "../utils/appError.js";
 
@@ -8,7 +7,6 @@ export class BoardService {
       throw new AppError(400, "Board name is required");
     }
 
-    // Create board with default columns
     const board = await prisma.$transaction(async (tx) => {
       const newBoard = await tx.board.create({
         data: {
@@ -163,8 +161,8 @@ export class BoardService {
     });
   }
 
+  // ✅ Share Board
   async shareBoard(boardId: string, userEmail: string) {
-    // Find user by email
     const user = await prisma.user.findUnique({
       where: { email: userEmail },
     });
@@ -173,7 +171,6 @@ export class BoardService {
       throw new AppError(404, "User not found with this email");
     }
 
-    // Check if already shared
     const existingMember = await prisma.boardMember.findUnique({
       where: {
         boardId_userId: {
@@ -187,7 +184,6 @@ export class BoardService {
       throw new AppError(400, "Board already shared with this user");
     }
 
-    // Add member
     const member = await prisma.boardMember.create({
       data: {
         boardId,
@@ -207,6 +203,25 @@ export class BoardService {
     return member;
   }
 
+  // ✅ Get Board Members
+  async getBoardMembers(boardId: string) {
+    const members = await prisma.boardMember.findMany({
+      where: { boardId },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+      },
+    });
+
+    return members;
+  }
+
+  // ✅ Remove Member
   async removeMember(boardId: string, userId: string) {
     const member = await prisma.boardMember.findUnique({
       where: {

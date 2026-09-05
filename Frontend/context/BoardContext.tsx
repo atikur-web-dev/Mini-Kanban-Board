@@ -3,8 +3,8 @@
 import React, { createContext, useState, useContext, ReactNode, useCallback } from "react";
 import { boardApi, columnApi, taskApi } from "@/lib/api";
 import { Board, Column, Task } from "@/types";
+import { BoardMember } from "@/lib/api/board";
 
-// Type guard function
 const getErrorMessage = (error: unknown): string => {
   if (error instanceof Error) return error.message;
   if (typeof error === "string") return error;
@@ -26,6 +26,7 @@ interface BoardContextType {
   deleteBoard: (id: string) => Promise<void>;
   shareBoard: (boardId: string, email: string) => Promise<void>;
   removeMember: (boardId: string, userId: string) => Promise<void>;
+  getBoardMembers: (boardId: string) => Promise<BoardMember[]>; // ✅ Add this
   createColumn: (boardId: string, name: string) => Promise<Column>;
   updateColumn: (columnId: string, name: string) => Promise<Column>;
   deleteColumn: (columnId: string) => Promise<void>;
@@ -48,10 +49,8 @@ export function BoardProvider({ children }: { children: ReactNode }) {
     setError(null);
     try {
       const data = await boardApi.getAll();
-      console.log("Board data received:", data);
       setBoards(data);
     } catch (err: unknown) {
-      console.error("Error fetching board:", err);
       setError(getErrorMessage(err));
       throw err;
     } finally {
@@ -150,6 +149,21 @@ export function BoardProvider({ children }: { children: ReactNode }) {
       setLoading(false);
     }
   }, [fetchBoard]);
+
+  // ✅ Add this function
+  const getBoardMembers = useCallback(async (boardId: string) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const members = await boardApi.getMembers(boardId);
+      return members;
+    } catch (err: unknown) {
+      setError(getErrorMessage(err));
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   const createColumn = useCallback(async (boardId: string, name: string) => {
     setLoading(true);
@@ -278,6 +292,7 @@ export function BoardProvider({ children }: { children: ReactNode }) {
     deleteBoard,
     shareBoard,
     removeMember,
+    getBoardMembers, // ✅ Add this
     createColumn,
     updateColumn,
     deleteColumn,
