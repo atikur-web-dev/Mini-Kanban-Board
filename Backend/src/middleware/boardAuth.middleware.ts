@@ -1,3 +1,4 @@
+// Backend/src/middleware/boardAuth.middleware.ts
 import type { Request, Response, NextFunction } from "express";
 import { prisma } from "../lib/prisma.js";
 import { AppError } from "../utils/appError.js";

@@ -1,14 +1,23 @@
 // Backend/src/server.ts
+
 import { app } from "./app.js";
 import { env } from "./config/env.js";
 import { prisma } from "./lib/prisma.js";
 
-const server = app.listen(env.PORT, () => {
-  console.log(`API listening on http://localhost:${env.PORT}`);
+const server = app.listen(env.PORT, "0.0.0.0", () => {
+  console.log(`API listening on port ${env.PORT}`);
 });
 
+let isShuttingDown = false;
+
 async function shutdown(signal: string) {
+  if (isShuttingDown) {
+    return;
+  }
+
+  isShuttingDown = true;
   console.log(`Received ${signal}, shutting down`);
+
   server.close(async () => {
     await prisma.$disconnect();
     process.exit(0);
@@ -18,6 +27,7 @@ async function shutdown(signal: string) {
 process.on("SIGINT", () => {
   void shutdown("SIGINT");
 });
+
 process.on("SIGTERM", () => {
   void shutdown("SIGTERM");
 });
