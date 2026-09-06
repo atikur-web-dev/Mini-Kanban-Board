@@ -1,12 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-
 import toast from "react-hot-toast";
-
 import { useAuth } from "@/hooks/useAuth";
 import { useBoard } from "@/context/BoardContext";
 import { Loader } from "@/components/ui/Loader";
@@ -191,7 +188,9 @@ export default function DashboardPage() {
   const router = useRouter();
 
   const [showCreateModal, setShowCreateModal] = useState(false);
+
   const [newBoardName, setNewBoardName] = useState("");
+
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -219,13 +218,10 @@ export default function DashboardPage() {
 
     try {
       await createBoard(newBoardName.trim());
-
       closeCreateModal();
-
       toast.success("Board created successfully");
     } catch (err: unknown) {
       const msg = getErrorMessage(err);
-
       setError(msg);
       toast.error(msg);
     }
@@ -238,8 +234,12 @@ export default function DashboardPage() {
     toast(
       (t) => (
         <div className="flex items-center gap-3">
-          <span className="text-sm text-gray-200">
-            Delete board &ldquo;{name}&rdquo;?
+          <span className="rounded-lg bg-red-50 px-3 py-1.5 text-sm font-medium text-red-700">
+            Delete board{" "}
+            <span className="font-bold text-red-800">
+              &ldquo;{name}&rdquo;
+            </span>
+            ?
           </span>
 
           <button
