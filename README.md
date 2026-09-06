@@ -1,4 +1,4 @@
-# 🚀 Mini Kanban Board
+#  Mini Kanban Board
 
 A clean, modern, and collaborative Kanban board designed for organizing projects, workflow columns, and tasks in one centralized place. 
 
