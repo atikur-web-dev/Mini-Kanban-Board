@@ -238,7 +238,7 @@ export default function DashboardPage() {
     toast(
       (t) => (
         <div className="flex items-center gap-3">
-          <span className="text-sm text-slate-700">
+          <span className="text-sm text-gray-200">
             Delete board &ldquo;{name}&rdquo;?
           </span>
 
