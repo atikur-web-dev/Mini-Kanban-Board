@@ -74,9 +74,7 @@ function BoardPreview() {
                 Product Launch
               </p>
 
-              <p className="text-xs text-slate-500">
-                Project workspace
-              </p>
+              <p className="text-xs text-slate-500">Project workspace</p>
             </div>
           </div>
 
@@ -197,9 +195,7 @@ function PreviewColumn({
           </h3>
         </div>
 
-        <span className="text-xs font-medium text-slate-400">
-          {count}
-        </span>
+        <span className="text-xs font-medium text-slate-400">{count}</span>
       </div>
 
       <div className="space-y-2.5">
@@ -264,7 +260,7 @@ export default function LandingPage() {
         className="relative bg-cover bg-center bg-no-repeat"
         style={{
           backgroundImage:
-            "url('https://images.unsplash.com/photo-1770457732658-cbd4ff8d1008?auto=format&fit=crop&fm=jpg&q=85&w=2400')",
+            "url('https://images.unsplash.com/photo-1771877098339-4f7b7c5f3d2e?auto=format&fit=crop&w=2400&q=85')",
         }}
       >
         <div className="absolute inset-0 bg-white/80" />
@@ -282,16 +278,13 @@ export default function LandingPage() {
                   <LogoIcon />
                 </span>
 
-                <span className="text-base">
-                  Mini Kanban Board
-                </span>
+                <span className="text-base">Mini Kanban Board</span>
               </Link>
             </div>
 
             <div className="mx-auto max-w-4xl pt-16 text-center sm:pt-20">
               <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-blue-100 bg-blue-50/90 px-3.5 py-1.5 text-xs font-medium text-blue-700 backdrop-blur-sm">
                 <span className="h-1.5 w-1.5 rounded-full bg-blue-600" />
-
                 Simple workflow management
               </div>
 
@@ -303,9 +296,8 @@ export default function LandingPage() {
               </h1>
 
               <p className="mx-auto mt-6 max-w-2xl text-base leading-7 text-slate-600 sm:text-lg">
-                Plan tasks, manage workflows, and collaborate on
-                projects with a clean Kanban workspace built to keep
-                your work moving.
+                Plan tasks, manage workflows, and collaborate on projects with a
+                clean Kanban workspace built to keep your work moving.
               </p>
 
               <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
@@ -345,9 +337,8 @@ export default function LandingPage() {
             </h2>
 
             <p className="mt-4 text-sm leading-6 text-slate-600 sm:text-base">
-              Keep projects structured, tasks visible, and
-              collaboration straightforward without unnecessary
-              complexity.
+              Keep projects structured, tasks visible, and collaboration
+              straightforward without unnecessary complexity.
             </p>
           </div>
 
@@ -387,8 +378,8 @@ export default function LandingPage() {
           </h2>
 
           <p className="mx-auto mt-4 max-w-xl text-sm leading-6 text-blue-100 sm:text-base">
-            Create your first board and bring projects, tasks, and
-            collaboration into one focused workspace.
+            Create your first board and bring projects, tasks, and collaboration
+            into one focused workspace.
           </p>
 
           <Link
@@ -407,13 +398,10 @@ export default function LandingPage() {
             <span className="flex h-7 w-7 items-center justify-center rounded-md bg-blue-600 text-white">
               <LogoIcon />
             </span>
-
             Mini Kanban Board
           </div>
 
-          <p className="text-xs text-slate-500">
-            Plan. Organize. Collaborate.
-          </p>
+          <p className="text-xs text-slate-500">Plan. Organize. Collaborate.</p>
         </div>
       </footer>
     </main>
