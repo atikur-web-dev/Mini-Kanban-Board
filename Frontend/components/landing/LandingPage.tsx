@@ -256,8 +256,8 @@ export default function LandingPage() {
       {/* Hero */}
       <section className="relative">
         <div className="absolute inset-0 -z-10 overflow-hidden">
-          <div className="absolute left-1/2 top-[-180px] h-[500px] w-[700px] -translate-x-1/2 rounded-full bg-blue-100/60 blur-3xl" />
-          <div className="absolute right-[-180px] top-[220px] h-[320px] w-[320px] rounded-full bg-sky-100/50 blur-3xl" />
+          <div className="absolute left-1/2 -top-45] h-125 w-175 -translate-x-1/2 rounded-full bg-blue-100/60 blur-3xl" />
+          <div className="absolute -right-45` top-55 h-80 w-[320px] rounded-full bg-sky-100/50 blur-3xl" />
         </div>
 
         <div className="mx-auto max-w-7xl px-5 pb-16 pt-8 sm:px-8 sm:pt-10 lg:px-10 lg:pb-24">
