@@ -44,4 +44,18 @@ router.get(
   githubAuthController.handleGitHubCallback.bind(githubAuthController)
 );
 
+router.post(
+  "/google/exchange",
+  googleAuthController.exchangeOAuthCode.bind(
+    googleAuthController,
+  ),
+);
+
+router.post(
+  "/github/exchange",
+  githubAuthController.exchangeOAuthCode.bind(
+    githubAuthController,
+  ),
+);
+
 export default router;

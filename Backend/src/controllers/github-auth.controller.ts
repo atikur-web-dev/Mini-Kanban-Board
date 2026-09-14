@@ -1,20 +1,18 @@
-// Backend/src/controllers/github-auth.controller.ts
 import type { Request, Response, NextFunction } from "express";
+
 import { GitHubAuthService } from "../services/github-auth.service.js";
 import { AuthService } from "../services/auth.service.js";
+import { OAuthCodeService } from "../services/oauth-code.service.js";
+import { env } from "../config/env.js";
 
 const githubAuthService = new GitHubAuthService();
 const authService = new AuthService();
+const oauthCodeService = new OAuthCodeService();
 
 export class GitHubAuthController {
-  async startGitHubAuth(
-    _req: Request,
-    res: Response,
-    next: NextFunction,
-  ) {
+  async startGitHubAuth(_req: Request, res: Response, next: NextFunction) {
     try {
-      const authorizationUrl =
-        await githubAuthService.getAuthorizationUrl();
+      const authorizationUrl = await githubAuthService.getAuthorizationUrl();
 
       res.redirect(authorizationUrl);
     } catch (error) {
@@ -22,11 +20,7 @@ export class GitHubAuthController {
     }
   }
 
-  async handleGitHubCallback(
-    req: Request,
-    res: Response,
-    next: NextFunction,
-  ) {
+  async handleGitHubCallback(req: Request, res: Response, next: NextFunction) {
     try {
       const { code } = req.query;
 
@@ -44,8 +38,29 @@ export class GitHubAuthController {
 
       const githubUser = await githubAuthService.verifyCode(code);
 
-      const user =
-        await githubAuthService.findOrCreateUser(githubUser);
+      const user = await githubAuthService.findOrCreateUser(githubUser);
+
+      const oauthCode = await oauthCodeService.createCode(user.id);
+
+      res.redirect(
+        `${env.CORS_ORIGIN}/callback?code=${encodeURIComponent(
+          oauthCode,
+        )}&provider=github`,
+      );
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async exchangeOAuthCode(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { code } = req.body;
+
+      if (typeof code !== "string" || !code) {
+        throw new Error("OAuth code is required");
+      }
+
+      const user = await oauthCodeService.consumeCode(code);
 
       const token = authService.generateToken(user.id);
 

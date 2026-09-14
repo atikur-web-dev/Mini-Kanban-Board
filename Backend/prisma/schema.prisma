@@ -19,6 +19,21 @@ model User {
   memberships   BoardMember[]
   tasks         Task[]         @relation("TaskAssignee")
   oauthAccounts OAuthAccount[]
+  oauthCodes    OAuthCode[]
+}
+
+model OAuthCode {
+  id        String   @id @default(uuid())
+  codeHash  String   @unique
+  userId    String
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
 }
 
 model OAuthAccount {
