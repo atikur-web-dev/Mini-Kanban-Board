@@ -1,8 +1,8 @@
 // Backend/src/services/google-auth.service.ts
+import crypto from "node:crypto";
 import { OAuth2Client } from "google-auth-library";
 import { env } from "../config/env.js";
 import { prisma } from "../lib/prisma.js";
-import crypto from "node:crypto";
 
 const googleClient = new OAuth2Client(
   env.GOOGLE_CLIENT_ID,
@@ -11,8 +11,17 @@ const googleClient = new OAuth2Client(
 );
 
 export class GoogleAuthService {
-  getAuthorizationUrl(): string {
+  async getAuthorizationUrl(): Promise<string> {
     const state = crypto.randomBytes(32).toString("hex");
+
+    await prisma.oAuthState.create({
+      data: {
+        state,
+        provider: "google",
+        expiresAt: new Date(Date.now() + 10 * 60 * 1000),
+      },
+    });
+
     return googleClient.generateAuthUrl({
       access_type: "offline",
       scope: ["openid", "email", "profile"],
@@ -20,6 +29,39 @@ export class GoogleAuthService {
       state,
     });
   }
+
+  async verifyState(state: string): Promise<void> {
+    const oauthState = await prisma.oAuthState.findUnique({
+      where: {
+        state,
+      },
+    });
+
+    if (!oauthState) {
+      throw new Error("Invalid Google OAuth state");
+    }
+
+    if (oauthState.provider !== "google") {
+      throw new Error("Invalid OAuth provider");
+    }
+
+    if (oauthState.expiresAt < new Date()) {
+      await prisma.oAuthState.delete({
+        where: {
+          id: oauthState.id,
+        },
+      });
+
+      throw new Error("Google OAuth state has expired");
+    }
+
+    await prisma.oAuthState.delete({
+      where: {
+        id: oauthState.id,
+      },
+    });
+  }
+
   async verifyCode(code: string) {
     const { tokens } = await googleClient.getToken(code);
 
@@ -44,6 +86,7 @@ export class GoogleAuthService {
       name: payload.name ?? payload.email.split("@")[0]!,
     };
   }
+
   async findOrCreateUser(googleUser: {
     providerAccountId: string;
     email: string;

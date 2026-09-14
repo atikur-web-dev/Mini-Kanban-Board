@@ -51,7 +51,10 @@ export class AuthService {
     }
 
     // Verify password
-    const isValidPassword = await bcrypt.compare(password, user.passwordHash);
+    const isValidPassword = await bcrypt.compare(
+      password,
+      user.passwordHash,
+    );
 
     if (!isValidPassword) {
       throw new AppError(401, "Invalid email or password");
@@ -72,6 +75,8 @@ export class AuthService {
   }
 
   generateToken(userId: string): string {
-    return jwt.sign({ userId }, env.JWT_SECRET, { expiresIn: "7d" });
+    return jwt.sign({ userId }, env.JWT_SECRET, {
+      expiresIn: "7d",
+    });
   }
 }

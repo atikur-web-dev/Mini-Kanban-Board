@@ -7,16 +7,26 @@ const googleAuthService = new GoogleAuthService();
 const authService = new AuthService();
 
 export class GoogleAuthController {
-  startGoogleAuth(_req: Request, res: Response, next: NextFunction) {
+  async startGoogleAuth(
+    _req: Request,
+    res: Response,
+    next: NextFunction,
+  ) {
     try {
-      const authorizationUrl = googleAuthService.getAuthorizationUrl();
+      const authorizationUrl =
+        await googleAuthService.getAuthorizationUrl();
 
       res.redirect(authorizationUrl);
     } catch (error) {
       next(error);
     }
   }
-  async handleGoogleCallback(req: Request, res: Response, next: NextFunction) {
+
+  async handleGoogleCallback(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ) {
     try {
       const { code } = req.query;
 
@@ -24,8 +34,18 @@ export class GoogleAuthController {
         throw new Error("Google authorization code is missing");
       }
 
+      const { state } = req.query;
+
+      if (typeof state !== "string" || !state) {
+        throw new Error("Google OAuth state is missing");
+      }
+
+      await googleAuthService.verifyState(state);
+
       const googleUser = await googleAuthService.verifyCode(code);
+
       const user = await googleAuthService.findOrCreateUser(googleUser);
+
       const token = authService.generateToken(user.id);
 
       res.json({
