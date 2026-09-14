@@ -8,16 +8,41 @@ datasource db {
 }
 
 model User {
-  id           String   @id @default(uuid())
-  name         String
-  email        String   @unique
-  passwordHash String
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id            String         @id @default(uuid())
+  name          String
+  email         String         @unique
+  passwordHash  String?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
 
-  ownedBoards Board[]       @relation("BoardOwner")
-  memberships BoardMember[]
-  tasks       Task[]        @relation("TaskAssignee")
+  ownedBoards   Board[]        @relation("BoardOwner")
+  memberships   BoardMember[]
+  tasks         Task[]         @relation("TaskAssignee")
+  oauthAccounts OAuthAccount[]
+}
+
+model OAuthAccount {
+  id                String   @id @default(uuid())
+  userId            String
+  provider          String
+  providerAccountId String
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+model OAuthState {
+  id        String   @id @default(uuid())
+  state     String   @unique
+  provider  String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([expiresAt])
 }
 
 model Board {

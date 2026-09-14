@@ -46,7 +46,7 @@ export class AuthService {
       where: { email },
     });
 
-    if (!user) {
+    if (!user || !user.passwordHash) {
       throw new AppError(401, "Invalid email or password");
     }
 
@@ -71,7 +71,7 @@ export class AuthService {
     };
   }
 
-  private generateToken(userId: string): string {
+  generateToken(userId: string): string {
     return jwt.sign({ userId }, env.JWT_SECRET, { expiresIn: "7d" });
   }
 }
