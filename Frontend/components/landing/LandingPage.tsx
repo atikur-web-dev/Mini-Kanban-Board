@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from "next/link";
@@ -57,6 +58,111 @@ function CheckIcon() {
   );
 }
 
+function PreviewColumn({
+  title,
+  count,
+  dotColor,
+  tasks,
+}: {
+  title: string;
+  count: string;
+  dotColor: "gray" | "blue" | "green";
+  tasks: {
+    title: string;
+    label: string;
+    labelColor: "purple" | "yellow" | "gray" | "blue" | "cyan" | "green" | "indigo" | "sky";
+  }[];
+}) {
+  return (
+    <div className="rounded-xl border border-slate-200 bg-slate-100/70 p-3">
+      <div className="mb-3 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          {dotColor === "gray" && (
+            <span className="h-2 w-2 rounded-full bg-slate-400" />
+          )}
+
+          {dotColor === "blue" && (
+            <span className="h-2 w-2 rounded-full bg-blue-500" />
+          )}
+
+          {dotColor === "green" && (
+            <span className="h-2 w-2 rounded-full bg-emerald-500" />
+          )}
+
+          <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-700">
+            {title}
+          </h3>
+        </div>
+
+        <span className="text-xs font-medium text-slate-400">
+          {count}
+        </span>
+      </div>
+
+      <div className="space-y-2.5">
+        {tasks.map((task) => (
+          <div
+            key={task.title}
+            className="rounded-lg border border-slate-200 bg-white p-3 shadow-sm"
+          >
+            <p className="mb-2 text-sm font-medium leading-5 text-slate-800">
+              {task.title}
+            </p>
+
+            {task.labelColor === "purple" && (
+              <span className="inline-flex rounded-md bg-violet-50 px-2 py-1 text-[10px] font-medium text-violet-700">
+                {task.label}
+              </span>
+            )}
+
+            {task.labelColor === "yellow" && (
+              <span className="inline-flex rounded-md bg-amber-50 px-2 py-1 text-[10px] font-medium text-amber-700">
+                {task.label}
+              </span>
+            )}
+
+            {task.labelColor === "gray" && (
+              <span className="inline-flex rounded-md bg-slate-100 px-2 py-1 text-[10px] font-medium text-slate-600">
+                {task.label}
+              </span>
+            )}
+
+            {task.labelColor === "blue" && (
+              <span className="inline-flex rounded-md bg-blue-50 px-2 py-1 text-[10px] font-medium text-blue-700">
+                {task.label}
+              </span>
+            )}
+
+            {task.labelColor === "cyan" && (
+              <span className="inline-flex rounded-md bg-cyan-50 px-2 py-1 text-[10px] font-medium text-cyan-700">
+                {task.label}
+              </span>
+            )}
+
+            {task.labelColor === "green" && (
+              <span className="inline-flex rounded-md bg-emerald-50 px-2 py-1 text-[10px] font-medium text-emerald-700">
+                {task.label}
+              </span>
+            )}
+
+            {task.labelColor === "indigo" && (
+              <span className="inline-flex rounded-md bg-indigo-50 px-2 py-1 text-[10px] font-medium text-indigo-700">
+                {task.label}
+              </span>
+            )}
+
+            {task.labelColor === "sky" && (
+              <span className="inline-flex rounded-md bg-sky-50 px-2 py-1 text-[10px] font-medium text-sky-700">
+                {task.label}
+              </span>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function BoardPreview() {
   return (
     <div className="relative mx-auto w-full max-w-5xl">
@@ -74,7 +180,9 @@ function BoardPreview() {
                 Product Launch
               </p>
 
-              <p className="text-xs text-slate-500">Project workspace</p>
+              <p className="text-xs text-slate-500">
+                Project workspace
+              </p>
             </div>
           </div>
 
@@ -103,22 +211,22 @@ function BoardPreview() {
           <PreviewColumn
             title="To Do"
             count="3"
-            accent="bg-slate-400"
+            dotColor="gray"
             tasks={[
               {
                 title: "Design landing page",
                 label: "Design",
-                labelClass: "bg-violet-50 text-violet-700",
+                labelColor: "purple",
               },
               {
                 title: "Write project copy",
                 label: "Content",
-                labelClass: "bg-amber-50 text-amber-700",
+                labelColor: "yellow",
               },
               {
                 title: "Plan sprint tasks",
                 label: "Planning",
-                labelClass: "bg-slate-100 text-slate-600",
+                labelColor: "gray",
               },
             ]}
           />
@@ -126,17 +234,17 @@ function BoardPreview() {
           <PreviewColumn
             title="In Progress"
             count="2"
-            accent="bg-blue-500"
+            dotColor="blue"
             tasks={[
               {
                 title: "Build authentication",
                 label: "Development",
-                labelClass: "bg-blue-50 text-blue-700",
+                labelColor: "blue",
               },
               {
                 title: "Create dashboard UI",
                 label: "Frontend",
-                labelClass: "bg-cyan-50 text-cyan-700",
+                labelColor: "cyan",
               },
             ]}
           />
@@ -144,77 +252,26 @@ function BoardPreview() {
           <PreviewColumn
             title="Done"
             count="3"
-            accent="bg-emerald-500"
+            dotColor="green"
             tasks={[
               {
                 title: "Set up database",
                 label: "Backend",
-                labelClass: "bg-emerald-50 text-emerald-700",
+                labelColor: "green",
               },
               {
                 title: "Create project board",
                 label: "Setup",
-                labelClass: "bg-indigo-50 text-indigo-700",
+                labelColor: "indigo",
               },
               {
                 title: "Configure API",
                 label: "API",
-                labelClass: "bg-sky-50 text-sky-700",
+                labelColor: "sky",
               },
             ]}
           />
         </div>
-      </div>
-    </div>
-  );
-}
-
-function PreviewColumn({
-  title,
-  count,
-  accent,
-  tasks,
-}: {
-  title: string;
-  count: string;
-  accent: string;
-  tasks: {
-    title: string;
-    label: string;
-    labelClass: string;
-  }[];
-}) {
-  return (
-    <div className="rounded-xl border border-slate-200 bg-slate-100/70 p-3">
-      <div className="mb-3 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <span className={`h-2 w-2 rounded-full ${accent}`} />
-
-          <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-700">
-            {title}
-          </h3>
-        </div>
-
-        <span className="text-xs font-medium text-slate-400">{count}</span>
-      </div>
-
-      <div className="space-y-2.5">
-        {tasks.map((task) => (
-          <div
-            key={task.title}
-            className="rounded-lg border border-slate-200 bg-white p-3 shadow-sm"
-          >
-            <p className="mb-2 text-sm font-medium leading-5 text-slate-800">
-              {task.title}
-            </p>
-
-            <span
-              className={`inline-flex rounded-md px-2 py-1 text-[10px] font-medium ${task.labelClass}`}
-            >
-              {task.label}
-            </span>
-          </div>
-        ))}
       </div>
     </div>
   );
@@ -256,16 +313,13 @@ const features = [
 export default function LandingPage() {
   return (
     <main className="min-h-screen overflow-hidden bg-white text-slate-900">
-      <section
-        className="relative bg-cover bg-center bg-no-repeat"
-        style={{
-          backgroundImage:
-            "url('https://www.capdata.co.uk/assets/about-1-e6167468.png')",
-        }}
-      >
-        <div className="absolute inset-0 bg-white/80" />
+      {/* Hero */}
+      <section className="relative overflow-hidden bg-gradient-to-b from-blue-50 via-white to-white">
+        <div className="pointer-events-none absolute -left-32 -top-32 h-80 w-80 rounded-full bg-blue-200/40 blur-3xl" />
 
-        <div className="absolute inset-0 bg-linear-to-b from-white/90 via-white/70 to-white/95" />
+        <div className="pointer-events-none absolute -right-40 top-16 h-96 w-96 rounded-full bg-blue-100/70 blur-3xl" />
+
+        <div className="pointer-events-none absolute left-1/2 top-80 h-72 w-72 -translate-x-1/2 rounded-full bg-blue-50/80 blur-3xl" />
 
         <div className="relative">
           <div className="mx-auto max-w-7xl px-5 pb-16 pt-8 sm:px-8 sm:pt-10 lg:px-10 lg:pb-24">
@@ -278,13 +332,16 @@ export default function LandingPage() {
                   <LogoIcon />
                 </span>
 
-                <span className="text-base">Mini Kanban Board</span>
+                <span className="text-base">
+                  Mini Kanban Board
+                </span>
               </Link>
             </div>
 
             <div className="mx-auto max-w-4xl pt-16 text-center sm:pt-20">
-              <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-blue-100 bg-blue-50/90 px-3.5 py-1.5 text-xs font-medium text-blue-700 backdrop-blur-sm">
+              <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-blue-100 bg-white/90 px-3.5 py-1.5 text-xs font-medium text-blue-700 shadow-sm">
                 <span className="h-1.5 w-1.5 rounded-full bg-blue-600" />
+
                 Simple workflow management
               </div>
 
@@ -296,8 +353,9 @@ export default function LandingPage() {
               </h1>
 
               <p className="mx-auto mt-6 max-w-2xl text-base leading-7 text-slate-600 sm:text-lg">
-                Plan tasks, manage workflows, and collaborate on projects with a
-                clean Kanban workspace built to keep your work moving.
+                Plan tasks, manage workflows, and collaborate on
+                projects with a clean Kanban workspace built to keep
+                your work moving.
               </p>
 
               <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
@@ -311,7 +369,7 @@ export default function LandingPage() {
 
                 <Link
                   href="/login"
-                  className="inline-flex w-full items-center justify-center rounded-lg border border-slate-200 bg-white/90 px-6 py-3 text-sm font-semibold text-slate-700 backdrop-blur-sm transition hover:border-slate-300 hover:bg-white sm:w-auto"
+                  className="inline-flex w-full items-center justify-center rounded-lg border border-slate-200 bg-white px-6 py-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 sm:w-auto"
                 >
                   Sign In
                 </Link>
@@ -325,6 +383,7 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* Features */}
       <section className="border-y border-slate-100 bg-slate-50/70">
         <div className="mx-auto max-w-7xl px-5 py-16 sm:px-8 sm:py-20 lg:px-10">
           <div className="mx-auto max-w-2xl text-center">
@@ -337,8 +396,9 @@ export default function LandingPage() {
             </h2>
 
             <p className="mt-4 text-sm leading-6 text-slate-600 sm:text-base">
-              Keep projects structured, tasks visible, and collaboration
-              straightforward without unnecessary complexity.
+              Keep projects structured, tasks visible, and
+              collaboration straightforward without unnecessary
+              complexity.
             </p>
           </div>
 
@@ -365,21 +425,20 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <section className="relative overflow-hidden">
-        <div className="absolute inset-0 -z-10 bg-blue-600" />
+      {/* CTA */}
+      <section className="relative overflow-hidden bg-blue-600">
+        <div className="pointer-events-none absolute -right-24 -top-32 h-72 w-72 rounded-full bg-white/10 blur-2xl" />
 
-        <div className="absolute -right-24 -top-32 h-72 w-72 rounded-full bg-white/10 blur-2xl" />
+        <div className="pointer-events-none absolute -bottom-40 -left-24 h-80 w-80 rounded-full bg-blue-400/20 blur-3xl" />
 
-        <div className="absolute -bottom-40 -left-24 h-80 w-80 rounded-full bg-blue-400/20 blur-3xl" />
-
-        <div className="mx-auto max-w-4xl px-5 py-16 text-center sm:px-8 sm:py-20">
+        <div className="relative mx-auto max-w-4xl px-5 py-16 text-center sm:px-8 sm:py-20">
           <h2 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">
             Ready to organize your workflow?
           </h2>
 
           <p className="mx-auto mt-4 max-w-xl text-sm leading-6 text-blue-100 sm:text-base">
-            Create your first board and bring projects, tasks, and collaboration
-            into one focused workspace.
+            Create your first board and bring projects, tasks, and
+            collaboration into one focused workspace.
           </p>
 
           <Link
@@ -392,16 +451,20 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* Footer */}
       <footer className="bg-white">
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-3 px-5 py-6 text-center sm:flex-row sm:px-8 sm:text-left lg:px-10">
           <div className="flex items-center gap-2 text-sm font-semibold text-slate-800">
             <span className="flex h-7 w-7 items-center justify-center rounded-md bg-blue-600 text-white">
               <LogoIcon />
             </span>
+
             Mini Kanban Board
           </div>
 
-          <p className="text-xs text-slate-500">Plan. Organize. Collaborate.</p>
+          <p className="text-xs text-slate-500">
+            Plan. Organize. Collaborate.
+          </p>
         </div>
       </footer>
     </main>
