@@ -3,15 +3,16 @@
 
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-
 import { authApi } from "@/lib/api";
 import { api } from "@/lib/api/client";
 
 function OAuthCallbackContent() {
   const router = useRouter();
+
   const searchParams = useSearchParams();
 
   const code = searchParams.get("code");
+
   const provider = searchParams.get("provider");
 
   const [error, setError] = useState<string | null>(null);
@@ -41,16 +42,15 @@ function OAuthCallbackContent() {
 
         const { user, token } = response;
 
-        /*
-         * Important:
-         * This is our application's own JWT.
-         * Google/GitHub access tokens are NOT stored or used
-         * for protected application APIs.
-         */
         api.setToken(token);
+
         localStorage.setItem(
           "user",
           JSON.stringify(user),
+        );
+
+        window.dispatchEvent(
+          new Event("auth-storage"),
         );
 
         router.replace("/dashboard");
