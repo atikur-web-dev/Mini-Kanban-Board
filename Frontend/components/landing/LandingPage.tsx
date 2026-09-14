@@ -260,7 +260,7 @@ export default function LandingPage() {
         className="relative bg-cover bg-center bg-no-repeat"
         style={{
           backgroundImage:
-            "url('https://images.unsplash.com/photo-1771877098339-4f7b7c5f3d2e?auto=format&fit=crop&w=2400&q=85')",
+            "url('https://www.capdata.co.uk/assets/about-1-e6167468.png')",
         }}
       >
         <div className="absolute inset-0 bg-white/80" />
