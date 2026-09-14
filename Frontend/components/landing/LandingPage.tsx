@@ -1,4 +1,3 @@
-// Frontend/components/landing/LandingPage.tsx
 "use client";
 
 import Link from "next/link";
@@ -74,7 +73,10 @@ function BoardPreview() {
               <p className="text-sm font-semibold text-slate-900">
                 Product Launch
               </p>
-              <p className="text-xs text-slate-500">Project workspace</p>
+
+              <p className="text-xs text-slate-500">
+                Project workspace
+              </p>
             </div>
           </div>
 
@@ -87,9 +89,11 @@ function BoardPreview() {
               <div className="flex h-7 w-7 items-center justify-center rounded-full border-2 border-white bg-slate-800 text-[10px] font-semibold text-white">
                 AR
               </div>
+
               <div className="flex h-7 w-7 items-center justify-center rounded-full border-2 border-white bg-blue-500 text-[10px] font-semibold text-white">
                 MK
               </div>
+
               <div className="flex h-7 w-7 items-center justify-center rounded-full border-2 border-white bg-slate-300 text-[10px] font-semibold text-slate-700">
                 +
               </div>
@@ -187,12 +191,15 @@ function PreviewColumn({
       <div className="mb-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <span className={`h-2 w-2 rounded-full ${accent}`} />
+
           <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-700">
             {title}
           </h3>
         </div>
 
-        <span className="text-xs font-medium text-slate-400">{count}</span>
+        <span className="text-xs font-medium text-slate-400">
+          {count}
+        </span>
       </div>
 
       <div className="space-y-2.5">
@@ -253,69 +260,79 @@ const features = [
 export default function LandingPage() {
   return (
     <main className="min-h-screen overflow-hidden bg-white text-slate-900">
-      {/* Hero */}
-      <section className="relative">
-        <div className="absolute inset-0 -z-10 overflow-hidden">
-          <div className="absolute left-1/2 -top-45] h-125 w-175 -translate-x-1/2 rounded-full bg-blue-100/60 blur-3xl" />
-          <div className="absolute -right-45` top-55 h-80 w-[320px] rounded-full bg-sky-100/50 blur-3xl" />
-        </div>
+      <section
+        className="relative bg-cover bg-center bg-no-repeat"
+        style={{
+          backgroundImage:
+            "url('https://images.unsplash.com/photo-1770457732658-cbd4ff8d1008?auto=format&fit=crop&fm=jpg&q=85&w=2400')",
+        }}
+      >
+        <div className="absolute inset-0 bg-white/80" />
 
-        <div className="mx-auto max-w-7xl px-5 pb-16 pt-8 sm:px-8 sm:pt-10 lg:px-10 lg:pb-24">
-          {/* Brand */}
-          <div className="flex items-center justify-center">
-            <Link
-              href="/"
-              className="inline-flex items-center gap-2.5 text-sm font-semibold tracking-tight text-slate-900"
-            >
-              <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-600 text-white shadow-sm">
-                <LogoIcon />
-              </span>
+        <div className="absolute inset-0 bg-linear-to-b from-white/90 via-white/70 to-white/95" />
 
-              <span className="text-base">Mini Kanban Board</span>
-            </Link>
-          </div>
-
-          <div className="mx-auto max-w-4xl pt-16 text-center sm:pt-20">
-            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-3.5 py-1.5 text-xs font-medium text-blue-700">
-              <span className="h-1.5 w-1.5 rounded-full bg-blue-600" />
-              Simple workflow management
-            </div>
-
-            <h1 className="text-4xl font-bold tracking-tight text-slate-950 sm:text-5xl lg:text-6xl">
-              Organize your work.
-              <span className="block text-blue-600">Move projects forward.</span>
-            </h1>
-
-            <p className="mx-auto mt-6 max-w-2xl text-base leading-7 text-slate-600 sm:text-lg">
-              Plan tasks, manage workflows, and collaborate on projects with a
-              clean Kanban workspace built to keep your work moving.
-            </p>
-
-            <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
+        <div className="relative">
+          <div className="mx-auto max-w-7xl px-5 pb-16 pt-8 sm:px-8 sm:pt-10 lg:px-10 lg:pb-24">
+            <div className="flex items-center justify-center">
               <Link
-                href="/register"
-                className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 sm:w-auto"
+                href="/"
+                className="inline-flex items-center gap-2.5 text-sm font-semibold tracking-tight text-slate-900"
               >
-                Get Started
-                <ArrowRightIcon />
-              </Link>
+                <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-600 text-white shadow-sm">
+                  <LogoIcon />
+                </span>
 
-              <Link
-                href="/login"
-                className="inline-flex w-full items-center justify-center rounded-lg border border-slate-200 bg-white px-6 py-3 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 sm:w-auto"
-              >
-                Sign In
+                <span className="text-base">
+                  Mini Kanban Board
+                </span>
               </Link>
             </div>
-          </div>
 
-          <div className="mt-14 sm:mt-16 lg:mt-20">
-            <BoardPreview />
+            <div className="mx-auto max-w-4xl pt-16 text-center sm:pt-20">
+              <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-blue-100 bg-blue-50/90 px-3.5 py-1.5 text-xs font-medium text-blue-700 backdrop-blur-sm">
+                <span className="h-1.5 w-1.5 rounded-full bg-blue-600" />
+
+                Simple workflow management
+              </div>
+
+              <h1 className="text-4xl font-bold tracking-tight text-slate-950 sm:text-5xl lg:text-6xl">
+                Organize your work.
+                <span className="block text-blue-600">
+                  Move projects forward.
+                </span>
+              </h1>
+
+              <p className="mx-auto mt-6 max-w-2xl text-base leading-7 text-slate-600 sm:text-lg">
+                Plan tasks, manage workflows, and collaborate on
+                projects with a clean Kanban workspace built to keep
+                your work moving.
+              </p>
+
+              <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
+                <Link
+                  href="/register"
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 sm:w-auto"
+                >
+                  Get Started
+                  <ArrowRightIcon />
+                </Link>
+
+                <Link
+                  href="/login"
+                  className="inline-flex w-full items-center justify-center rounded-lg border border-slate-200 bg-white/90 px-6 py-3 text-sm font-semibold text-slate-700 backdrop-blur-sm transition hover:border-slate-300 hover:bg-white sm:w-auto"
+                >
+                  Sign In
+                </Link>
+              </div>
+            </div>
+
+            <div className="mt-14 sm:mt-16 lg:mt-20">
+              <BoardPreview />
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Features */}
       <section className="border-y border-slate-100 bg-slate-50/70">
         <div className="mx-auto max-w-7xl px-5 py-16 sm:px-8 sm:py-20 lg:px-10">
           <div className="mx-auto max-w-2xl text-center">
@@ -328,8 +345,9 @@ export default function LandingPage() {
             </h2>
 
             <p className="mt-4 text-sm leading-6 text-slate-600 sm:text-base">
-              Keep projects structured, tasks visible, and collaboration
-              straightforward without unnecessary complexity.
+              Keep projects structured, tasks visible, and
+              collaboration straightforward without unnecessary
+              complexity.
             </p>
           </div>
 
@@ -356,10 +374,11 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* CTA */}
       <section className="relative overflow-hidden">
         <div className="absolute inset-0 -z-10 bg-blue-600" />
+
         <div className="absolute -right-24 -top-32 h-72 w-72 rounded-full bg-white/10 blur-2xl" />
+
         <div className="absolute -bottom-40 -left-24 h-80 w-80 rounded-full bg-blue-400/20 blur-3xl" />
 
         <div className="mx-auto max-w-4xl px-5 py-16 text-center sm:px-8 sm:py-20">
@@ -382,13 +401,13 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Footer */}
       <footer className="bg-white">
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-3 px-5 py-6 text-center sm:flex-row sm:px-8 sm:text-left lg:px-10">
           <div className="flex items-center gap-2 text-sm font-semibold text-slate-800">
             <span className="flex h-7 w-7 items-center justify-center rounded-md bg-blue-600 text-white">
               <LogoIcon />
             </span>
+
             Mini Kanban Board
           </div>
 
